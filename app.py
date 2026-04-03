@@ -9,6 +9,7 @@ from audio_recorder_streamlit import audio_recorder
 import speech_recognition as sr
 import tempfile
 import os
+import base64
 
 st.set_page_config(page_title="Diabetes Testimonial Chatbot", layout="wide")
 
@@ -34,21 +35,6 @@ def load_rag_system():
     df["transcript"] = df["transcript"].fillna("").astype(str).str.strip()
 
     df = df[df["transcript"] != ""].reset_index(drop=True)
-
-    all_docs = []
-    for i, row in df.iterrows():
-        block = f"""TESTIMONIAL_ID: {i}
-TITLE: {row['title']}
-URL: {row['url']}
-TRANSCRIPT:
-{row['transcript']}
-
-{'='*100}
-"""
-        all_docs.append(block)
-
-    with open("all_patient_testimonials.txt", "w", encoding="utf-8") as f:
-        f.write("\n".join(all_docs))
 
     documents = []
     for i, row in df.iterrows():
@@ -77,9 +63,9 @@ TRANSCRIPT:
     index = faiss.IndexFlatIP(dimension)
     index.add(doc_embeddings.astype("float32"))
 
-    return df, documents, embed_model, index
+    return documents, embed_model, index
 
-df, documents, embed_model, index = load_rag_system()
+documents, embed_model, index = load_rag_system()
 
 # -----------------------------
 # Retrieval
@@ -138,7 +124,6 @@ Context:
     response = model.generate_content(prompt)
 
     return {
-        "query": query,
         "answer": response.text,
         "sources": [
             {"title": r["title"], "url": r["url"], "score": r["score"]}
@@ -174,42 +159,63 @@ def text_to_speech(text, lang="en"):
         return tmp_file.name
 
 # -----------------------------
-# UI (UPDATED DESIGN)
+# UI DESIGN
 # -----------------------------
 
-st.markdown("""
+# Convert logo to base64
+def get_base64_image(path):
+    with open(path, "rb") as img:
+        return base64.b64encode(img.read()).decode()
+
+logo_base64 = get_base64_image("/mnt/data/c4fef770-f8cd-4f51-842f-6923b94858d8.png")
+
+st.markdown(f"""
 <style>
-body {
+body {{
     background-color: #f5f7fb;
-}
-.header {
-    text-align:center;
-    padding:30px;
+}}
+
+.header {{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px 30px;
     border-radius:15px;
     background: linear-gradient(90deg,#4facfe,#00f2fe);
     color:white;
-}
-.card {
+}}
+
+.card {{
     padding:20px;
     border-radius:15px;
     background:white;
     box-shadow:0px 4px 12px rgba(0,0,0,0.08);
     margin-bottom:20px;
-}
-.stButton>button {
+}}
+
+.stButton>button {{
     width:100%;
-    border-radius:10px;
-}
+    border-radius:12px;
+    height:45px;
+    font-weight:500;
+}}
+
+.sample1 button {{background:#ffe0e0;}}
+.sample2 button {{background:#e0ffe5;}}
+.sample3 button {{background:#e0f0ff;}}
 </style>
 """, unsafe_allow_html=True)
 
 # HEADER
-st.markdown('<div class="header">', unsafe_allow_html=True)
-st.image("https://www.stillwater.you/images/logo.png", width=180)
-st.markdown("## StillWater")
-st.markdown("### Diabetes Testimonial Chatbot")
-st.markdown("AI-powered insights from real patient stories")
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown(f"""
+<div class="header">
+    <img src="data:image/png;base64,{logo_base64}" style="height:60px;">
+    <div style="font-size:20px;font-weight:500;">
+        Diabetes Testimonial Chatbot<br>
+        <span style="font-size:14px;">AI-powered insights from real patient stories</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 st.write("")
 
@@ -227,17 +233,15 @@ lang_map = {
     "Hindi": {"stt": "hi-IN", "tts": "hi"}
 }
 
-# SAMPLE QUESTIONS
 preset_questions = [
     "Find testimonials where people reduced diabetes medicine after switching to plant-based diet",
     "Find patient stories that talk about plant-based diet helping diabetes",
     "Find testimonials where patients describe how long they had diabetes"
 ]
 
-# LAYOUT
 left, right = st.columns([1,2])
 
-# LEFT PANEL
+# LEFT
 with left:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🎤 Voice Input")
@@ -251,28 +255,32 @@ with left:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+# RIGHT
+with right:
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 💡 Sample Questions")
 
+    st.markdown("### 💡 Sample Questions")
     c1, c2, c3 = st.columns(3)
 
     with c1:
+        st.markdown('<div class="sample1">', unsafe_allow_html=True)
         if st.button("Reduce medicines"):
             st.session_state["selected_query"] = preset_questions[0]
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with c2:
+        st.markdown('<div class="sample2">', unsafe_allow_html=True)
         if st.button("Plant diet helps"):
             st.session_state["selected_query"] = preset_questions[1]
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with c3:
+        st.markdown('<div class="sample3">', unsafe_allow_html=True)
         if st.button("Duration"):
             st.session_state["selected_query"] = preset_questions[2]
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# RIGHT PANEL
-with right:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("---")
 
     default_query = st.session_state.get("selected_query", "")
     query = st.text_input("💬 Ask your question", value=default_query)
