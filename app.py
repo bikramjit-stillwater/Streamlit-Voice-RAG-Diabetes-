@@ -167,7 +167,7 @@ def get_base64_image(path):
     with open(path, "rb") as img:
         return base64.b64encode(img.read()).decode()
 
-logo_base64 = get_base64_image("/mnt/data/c4fef770-f8cd-4f51-842f-6923b94858d8.png")
+logo_base64 = get_base64_image("https://www.stillwater.you/images/logo.png")
 
 st.markdown(f"""
 <style>
