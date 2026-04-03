@@ -205,7 +205,7 @@ body {
 
 # HEADER
 st.markdown('<div class="header">', unsafe_allow_html=True)
-st.image("/mnt/data/c4fef770-f8cd-4f51-842f-6923b94858d8.png", width=180)
+st.image("https://www.stillwater.you/images/logo.png", width=180)
 st.markdown("## StillWater")
 st.markdown("### Diabetes Testimonial Chatbot")
 st.markdown("AI-powered insights from real patient stories")
