@@ -17,7 +17,6 @@ st.set_page_config(page_title="Diabetes Testimonial Chatbot", layout="wide")
 # -----------------------------
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-#genai.configure(api_key="")
 model = genai.GenerativeModel("models/gemini-2.5-flash")
 
 # -----------------------------
@@ -175,79 +174,136 @@ def text_to_speech(text, lang="en"):
         return tmp_file.name
 
 # -----------------------------
-# UI
+# UI (UPDATED DESIGN)
 # -----------------------------
-st.title("Diabetes Testimonial Chatbot")
-st.write("Ask questions from patient testimonial data with text or voice.")
 
-input_lang = st.selectbox(
-    "Select input language",
-    ["English", "Hindi"]
-)
+st.markdown("""
+<style>
+body {
+    background-color: #f5f7fb;
+}
+.header {
+    text-align:center;
+    padding:30px;
+    border-radius:15px;
+    background: linear-gradient(90deg,#4facfe,#00f2fe);
+    color:white;
+}
+.card {
+    padding:20px;
+    border-radius:15px;
+    background:white;
+    box-shadow:0px 4px 12px rgba(0,0,0,0.08);
+    margin-bottom:20px;
+}
+.stButton>button {
+    width:100%;
+    border-radius:10px;
+}
+</style>
+""", unsafe_allow_html=True)
 
-output_lang = st.selectbox(
-    "Select output voice language",
-    ["English", "Hindi"]
-)
+# HEADER
+st.markdown('<div class="header">', unsafe_allow_html=True)
+st.image("/mnt/data/c4fef770-f8cd-4f51-842f-6923b94858d8.png", width=180)
+st.markdown("## StillWater")
+st.markdown("### Diabetes Testimonial Chatbot")
+st.markdown("AI-powered insights from real patient stories")
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.write("")
+
+# LANGUAGE
+col_lang1, col_lang2 = st.columns(2)
+
+with col_lang1:
+    input_lang = st.selectbox("🌐 Input Language", ["English", "Hindi"])
+
+with col_lang2:
+    output_lang = st.selectbox("🔊 Output Voice Language", ["English", "Hindi"])
 
 lang_map = {
     "English": {"stt": "en-IN", "tts": "en"},
     "Hindi": {"stt": "hi-IN", "tts": "hi"}
 }
 
+# SAMPLE QUESTIONS
 preset_questions = [
     "Find testimonials where people reduced diabetes medicine after switching to plant-based diet",
     "Find patient stories that talk about plant-based diet helping diabetes",
     "Find testimonials where patients describe how long they had diabetes"
 ]
 
-st.subheader("Try sample questions")
+# LAYOUT
+left, right = st.columns([1,2])
 
-col1, col2, col3 = st.columns(3)
+# LEFT PANEL
+with left:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("### 🎤 Voice Input")
 
-with col1:
-    if st.button("1. Reduced medicine after plant-based diet"):
-        st.session_state["selected_query"] = preset_questions[0]
+    audio_bytes = audio_recorder(text="Click to record", pause_threshold=2.0)
 
-with col2:
-    if st.button("2. Plant-based diet helping diabetes"):
-        st.session_state["selected_query"] = preset_questions[1]
+    if audio_bytes:
+        recognized_text = speech_to_text(audio_bytes, lang_code=lang_map[input_lang]["stt"])
+        st.session_state["selected_query"] = recognized_text
+        st.success(f"Recognized: {recognized_text}")
 
-with col3:
-    if st.button("3. Duration of diabetes in testimonials"):
-        st.session_state["selected_query"] = preset_questions[2]
+    st.markdown("</div>", unsafe_allow_html=True)
 
-st.subheader("Voice input")
-audio_bytes = audio_recorder(text="Click to record", pause_threshold=2.0)
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("### 💡 Sample Questions")
 
-if audio_bytes:
-    recognized_text = speech_to_text(audio_bytes, lang_code=lang_map[input_lang]["stt"])
-    st.session_state["selected_query"] = recognized_text
-    st.success(f"Recognized text: {recognized_text}")
+    c1, c2, c3 = st.columns(3)
 
-default_query = st.session_state.get("selected_query", "")
-query = st.text_input("Type your question", value=default_query)
+    with c1:
+        if st.button("Reduce medicines"):
+            st.session_state["selected_query"] = preset_questions[0]
 
-if st.button("Ask") and query.strip():
-    with st.spinner("Searching testimonials and generating answer..."):
-        result = ask_rag(query.strip(), top_k=3)
+    with c2:
+        if st.button("Plant diet helps"):
+            st.session_state["selected_query"] = preset_questions[1]
 
-    st.markdown("## Answer")
-    st.write(result["answer"])
+    with c3:
+        if st.button("Duration"):
+            st.session_state["selected_query"] = preset_questions[2]
 
-    st.markdown("## Sources")
-    for i, src in enumerate(result["sources"], start=1):
-        st.markdown(
-            f"**{i}. {src['title']}**  \n"
-            f"URL: {src['url']}  \n"
-            f"Score: {round(src['score'], 4)}"
-        )
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("## Voice Output")
-    audio_file = text_to_speech(result["answer"], lang=lang_map[output_lang]["tts"])
-    with open(audio_file, "rb") as f:
-        audio_bytes = f.read()
-        st.audio(audio_bytes, format="audio/mp3")
+# RIGHT PANEL
+with right:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
 
-    if os.path.exists(audio_file):
-        os.remove(audio_file)
+    default_query = st.session_state.get("selected_query", "")
+    query = st.text_input("💬 Ask your question", value=default_query)
+
+    if st.button("🚀 Ask") and query.strip():
+        with st.spinner("Thinking..."):
+            result = ask_rag(query.strip(), top_k=3)
+
+        st.markdown("### 🧠 Answer")
+        st.markdown(result["answer"])
+
+        st.markdown("---")
+        st.markdown("### 📚 Sources")
+
+        for i, src in enumerate(result["sources"], start=1):
+            st.markdown(
+                f"""**{i}. {src['title']}**  
+🔗 {src['url']}  
+⭐ Score: {round(src['score'], 4)}"""
+            )
+
+        st.markdown("---")
+        st.markdown("### 🔊 Voice Output")
+
+        audio_file = text_to_speech(result["answer"], lang=lang_map[output_lang]["tts"])
+
+        with open(audio_file, "rb") as f:
+            audio_bytes = f.read()
+            st.audio(audio_bytes, format="audio/mp3")
+
+        if os.path.exists(audio_file):
+            os.remove(audio_file)
+
+    st.markdown("</div>", unsafe_allow_html=True)
