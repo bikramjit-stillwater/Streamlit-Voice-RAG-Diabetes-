@@ -9,7 +9,6 @@ from audio_recorder_streamlit import audio_recorder
 import speech_recognition as sr
 import tempfile
 import os
-import base64
 
 st.set_page_config(page_title="Diabetes Testimonial Chatbot", layout="wide")
 
@@ -161,21 +160,12 @@ def text_to_speech(text, lang="en"):
 # -----------------------------
 # UI DESIGN
 # -----------------------------
-
-# Convert logo to base64
-def get_base64_image(path):
-    with open(path, "rb") as img:
-        return base64.b64encode(img.read()).decode()
-
-logo_base64 = get_base64_image("https://www.stillwater.you/images/logo.png")
-
-st.markdown(f"""
+st.markdown("""
 <style>
-body {{
+body {
     background-color: #f5f7fb;
-}}
-
-.header {{
+}
+.header {
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -183,33 +173,30 @@ body {{
     border-radius:15px;
     background: linear-gradient(90deg,#4facfe,#00f2fe);
     color:white;
-}}
-
-.card {{
+}
+.card {
     padding:20px;
     border-radius:15px;
     background:white;
     box-shadow:0px 4px 12px rgba(0,0,0,0.08);
     margin-bottom:20px;
-}}
-
-.stButton>button {{
+}
+.stButton>button {
     width:100%;
     border-radius:12px;
     height:45px;
     font-weight:500;
-}}
-
-.sample1 button {{background:#ffe0e0;}}
-.sample2 button {{background:#e0ffe5;}}
-.sample3 button {{background:#e0f0ff;}}
+}
+.sample1 button {background:#ffe0e0;}
+.sample2 button {background:#e0ffe5;}
+.sample3 button {background:#e0f0ff;}
 </style>
 """, unsafe_allow_html=True)
 
-# HEADER
-st.markdown(f"""
+# HEADER (LOGO FIXED)
+st.markdown("""
 <div class="header">
-    <img src="data:image/png;base64,{logo_base64}" style="height:60px;">
+    <img src="https://www.stillwater.you/images/logo.png" style="height:60px;">
     <div style="font-size:20px;font-weight:500;">
         Diabetes Testimonial Chatbot<br>
         <span style="font-size:14px;">AI-powered insights from real patient stories</span>
@@ -241,7 +228,7 @@ preset_questions = [
 
 left, right = st.columns([1,2])
 
-# LEFT
+# LEFT PANEL
 with left:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🎤 Voice Input")
@@ -255,7 +242,7 @@ with left:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-# RIGHT
+# RIGHT PANEL
 with right:
     st.markdown('<div class="card">', unsafe_allow_html=True)
 
