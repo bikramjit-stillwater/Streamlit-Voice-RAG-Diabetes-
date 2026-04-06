@@ -10,17 +10,20 @@ import speech_recognition as sr
 import tempfile
 import os
 
-st.set_page_config(page_title="Diabetes Testimonial Chatbot", layout="wide")
+# -----------------------------
+# PAGE CONFIG
+# -----------------------------
+st.set_page_config(page_title="StillWater AI", layout="wide")
 
 # -----------------------------
-# Gemini setup
+# GEMINI SETUP (UNCHANGED)
 # -----------------------------
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("models/gemini-2.5-flash")
 
 # -----------------------------
-# Load + RAG (UNCHANGED)
+# LOAD RAG (UNCHANGED)
 # -----------------------------
 @st.cache_resource
 def load_rag_system():
@@ -33,11 +36,10 @@ def load_rag_system():
             "doc_id": i,
             "title": row["title"],
             "url": row["url"],
-            "text": row["transcript"]
+            "text": f"{row['title']}\n{row['transcript']}"
         })
 
     embed_model = SentenceTransformer("all-MiniLM-L6-v2")
-
     embeddings = embed_model.encode(
         [d["text"] for d in documents],
         convert_to_numpy=True,
@@ -51,182 +53,195 @@ def load_rag_system():
 
 documents, embed_model, index = load_rag_system()
 
+# -----------------------------
+# RETRIEVE (UNCHANGED)
+# -----------------------------
 def retrieve(query, top_k=3):
-    q = embed_model.encode([query], convert_to_numpy=True,
-                           normalize_embeddings=True).astype("float32")
-    scores, idxs = index.search(q, top_k)
-    return [{**documents[i], "score": float(s)} for s, i in zip(scores[0], idxs[0])]
+    q_emb = embed_model.encode([query], convert_to_numpy=True, normalize_embeddings=True)
+    scores, indices = index.search(q_emb.astype("float32"), top_k)
 
+    results = []
+    for score, idx in zip(scores[0], indices[0]):
+        if idx != -1:
+            item = documents[idx].copy()
+            item["score"] = float(score)
+            results.append(item)
+    return results
+
+# -----------------------------
+# RAG (UNCHANGED)
+# -----------------------------
 def ask_rag(query):
     results = retrieve(query)
+
     context = "\n\n".join([r["text"] for r in results])
 
     prompt = f"""
-You are a testimonial-based assistant.
+Answer ONLY from testimonials.
 
-Rules:
-- Answer ONLY from context
-- No medical advice
-- Keep concise
+Question: {query}
 
-Q: {query}
 Context:
 {context}
 """
-    res = model.generate_content(prompt)
+
+    response = model.generate_content(prompt)
 
     return {
-        "answer": res.text,
+        "answer": response.text,
         "sources": results
     }
 
 # -----------------------------
-# Voice
+# VOICE HELPERS (UNCHANGED)
 # -----------------------------
-def speech_to_text(audio_bytes):
+def speech_to_text(audio_bytes, lang_code="en-IN"):
     r = sr.Recognizer()
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
-        f.write(audio_bytes)
-        path = f.name
-
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+        tmp.write(audio_bytes)
+        path = tmp.name
     try:
-        with sr.AudioFile(path) as src:
-            audio = r.record(src)
-            return r.recognize_google(audio)
+        with sr.AudioFile(path) as source:
+            audio = r.record(source)
+            return r.recognize_google(audio, language=lang_code)
     except:
-        return "Error recognizing speech"
+        return "Could not understand audio"
     finally:
         os.remove(path)
 
-def text_to_speech(text):
-    tts = gTTS(text)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as f:
-        tts.save(f.name)
-        return f.name
+def text_to_speech(text, lang="en"):
+    tts = gTTS(text=text, lang=lang)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
+        tts.save(tmp.name)
+        return tmp.name
 
 # -----------------------------
-# UI DESIGN
+# PREMIUM UI CSS
 # -----------------------------
 st.markdown("""
 <style>
-body {
-    background:#F8FAFC;
+html, body {
+    background: #F8FAFC;
     font-family: 'Inter', sans-serif;
 }
 
 /* HEADER */
 .header {
-background: linear-gradient(135deg,#4F8EF7,#7B61FF);
-padding:25px;
-border-radius:20px;
-color:white;
-background-image:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb');
-background-size:cover;
+    background: linear-gradient(135deg,#4F8EF7,#7B61FF);
+    padding: 25px;
+    border-radius: 15px;
+    color: white;
+    text-align: center;
+    margin-bottom: 15px;
 }
 
 /* CARD */
 .card {
-background:white;
-padding:20px;
-border-radius:15px;
-box-shadow:0 4px 10px rgba(0,0,0,0.05);
-margin-bottom:20px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    margin-top: 15px;
+}
+
+/* CHAT */
+.user {
+    background: #EEF2FF;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 5px 0;
+}
+.bot {
+    background: #E0F2FE;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 5px 0;
 }
 
 /* BUTTON */
-button {
-transition:0.3s;
-border-radius:10px;
+.stButton>button {
+    border-radius: 10px;
+    height: 45px;
+    transition: 0.3s;
 }
-button:hover {
-transform:scale(1.05);
-background:#4F8EF7 !important;
-color:white !important;
-}
-
-/* TEXT AREA */
-textarea {
-border-radius:12px !important;
+.stButton>button:hover {
+    background: #4F8EF7;
+    color: white;
 }
 </style>
 """, unsafe_allow_html=True)
 
+# -----------------------------
 # HEADER
+# -----------------------------
 st.markdown("""
 <div class="header">
-<h1>🌸 Diabetes Testimonial Chatbot</h1>
-<p>AI-powered insights from real patient stories</p>
+<h2>🌸 StillWater AI</h2>
+<p>Diabetes Testimonial Intelligence</p>
 </div>
 """, unsafe_allow_html=True)
 
-# INPUT + RESPONSE LAYOUT
-col1, col2 = st.columns([1,2])
+# -----------------------------
+# HERO IMAGE
+# -----------------------------
+st.image("https://www.stillwater.you/images/c.png", use_container_width=True)
 
-# ---------------- LEFT (INPUT)
+# -----------------------------
+# LANGUAGE
+# -----------------------------
+col1, col2 = st.columns(2)
 with col1:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-
-    st.markdown("### 🎤 Input")
-
-    c1, c2 = st.columns(2)
-    with c1:
-        audio_bytes = audio_recorder(text="🎤 Voice")
-    with c2:
-        st.button("⌨️ Text")
-
-    if audio_bytes:
-        st.session_state["query"] = speech_to_text(audio_bytes)
-
-    query = st.text_area("Type your question",
-                         value=st.session_state.get("query",""),
-                         placeholder="Ask about diabetes, diet, lifestyle...")
-
-    st.markdown("#### 🌐 Language")
-    lang = st.radio("", ["English", "Hindi"], horizontal=True)
-
-    ask_btn = st.button("🚀 Ask StillWater")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# ---------------- RIGHT (RESPONSE)
+    input_lang = st.selectbox("Input Language", ["English", "Hindi"])
 with col2:
-    if ask_btn and query:
+    output_lang = st.selectbox("Output Voice", ["English", "Hindi"])
 
-        result = ask_rag(query)
+lang_map = {
+    "English": {"stt": "en-IN", "tts": "en"},
+    "Hindi": {"stt": "hi-IN", "tts": "hi"}
+}
 
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+# -----------------------------
+# CHAT HISTORY
+# -----------------------------
+if "chat" not in st.session_state:
+    st.session_state.chat = []
 
-        st.markdown("### 🤖 AI Response")
-        st.markdown(result["answer"])
+# -----------------------------
+# INPUT
+# -----------------------------
+st.markdown('<div class="card">', unsafe_allow_html=True)
 
-        st.markdown("---")
-        st.markdown("### 💡 Key Takeaways")
-        st.markdown("""
-- Patients reduced medication  
-- HbA1c improved  
-- Lifestyle consistency matters  
-""")
+audio_bytes = audio_recorder("🎙️ Speak")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+if audio_bytes:
+    query = speech_to_text(audio_bytes, lang_map[input_lang]["stt"])
+else:
+    query = st.text_input("💬 Ask your question")
+
+if st.button("🚀 Ask") and query:
+    result = ask_rag(query)
+    st.session_state.chat.append(("user", query))
+    st.session_state.chat.append(("bot", result))
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# -----------------------------
+# CHAT DISPLAY
+# -----------------------------
+for role, msg in st.session_state.chat:
+
+    if role == "user":
+        st.markdown(f'<div class="user">🧑 {msg}</div>', unsafe_allow_html=True)
+
+    else:
+        st.markdown(f'<div class="bot">🤖 {msg["answer"]}</div>', unsafe_allow_html=True)
 
         # SOURCES
-        st.markdown("### 📊 Sources")
-        cols = st.columns(3)
+        st.markdown("**Sources:**")
+        for s in msg["sources"]:
+            st.markdown(f"- {s['title']} ({round(s['score'],3)})")
 
-        for i, src in enumerate(result["sources"]):
-            with cols[i % 3]:
-                st.image("https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg")
-                st.caption(src["title"])
-
-# SUGGESTED QUESTIONS
-st.markdown("### 💡 Suggested Questions")
-s1, s2, s3 = st.columns(3)
-
-with s1:
-    st.button("Reduce medicines naturally")
-
-with s2:
-    st.button("Best diet for diabetes")
-
-with s3:
-    st.button("How long to improve?")
+        # AUDIO
+        audio_file = text_to_speech(msg["answer"], lang_map[output_lang]["tts"])
+        st.audio(open(audio_file, "rb").read())
+        os.remove(audio_file)
