@@ -73,12 +73,13 @@ lang_map = {
     "Hindi": {"stt": "hi-IN", "tts": "hi"}
 }
 
-# Language toggle - top right
+# Language toggle - top right (compact)
 col_empty, col_lang = st.columns([3, 1])
 with col_lang:
     st.session_state.language = st.selectbox(
         "🌐", ["English", "Hindi"],
-        index=0 if st.session_state.language == "English" else 1
+        index=0 if st.session_state.language == "English" else 1,
+        label_visibility="collapsed"
     )
 
 # -----------------------------
@@ -168,6 +169,7 @@ Rules:
 3. Do not give medical advice.
 4. Mention relevant source title and URL.
 5. Keep the answer clear and short.
+6. Answer in {st.session_state.language}.
 
 User question:
 {query}
@@ -212,7 +214,7 @@ def text_to_speech(text, lang="en"):
         return tmp_file.name
 
 # -----------------------------
-# THEME / UI
+# THEME / UI - Updated with compact mic
 # -----------------------------
 st.markdown("""
 <style>
@@ -225,37 +227,53 @@ st.markdown("""
         background-attachment: fixed;
     }
     .block-container { padding-top: 1rem; padding-bottom: 1rem; max-width: 1250px; }
+    .main-shell { padding: 0.1rem 0.2rem 0.8rem 0.2rem; }
     .hero-wrap {
         background: rgba(255, 255, 255, 0.12);
         backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
         border: 1px solid rgba(255, 255, 255, 0.14);
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
         border-radius: 26px;
-        padding: 1.15rem 1.4rem;
+        padding: 0.95rem 1.3rem 1rem 1.3rem;
         text-align: center;
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
     }
-    .hero-logo { height: 54px; margin: 0 auto 0.4rem auto; display: block; object-fit: contain; }
+    .hero-logo { 
+        height: 48px; margin: 0 auto 0.3rem auto; 
+        display: block; object-fit: contain; 
+    }
     .hero-title {
-        color: #f7f4ee; font-size: 2.05rem; line-height: 1.15; font-weight: 800;
+        color: #f7f4ee; font-size: 1.85rem; 
+        line-height: 1.12; font-weight: 800;
         margin: 0; letter-spacing: -0.02em;
     }
     .panel-card {
         background: rgba(255, 255, 255, 0.14);
         backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.12);
         box-shadow: 0 10px 32px rgba(0, 0, 0, 0.14);
         border-radius: 22px;
-        padding: 1.2rem;
+        padding: 1.1rem;
         color: white;
-        margin-top: 0.6rem;
+        margin-top: 0.4rem;
     }
     .section-title { 
-        color: #ffffff; font-size: 1.08rem; font-weight: 700; 
-        margin-bottom: 0.9rem; line-height: 1.2;
+        color: #ffffff; font-size: 1.02rem; 
+        font-weight: 700; margin-bottom: 0.7rem; 
+        line-height: 1.2;
+    }
+    .voice-section {
+        padding: 0.6rem 0.8rem !important;
+        margin: 0.3rem 0 !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
     }
     .stSelectbox label, .stTextInput label {
         color: #ffffff !important; font-weight: 600 !important;
+        font-size: 0.88rem !important;
     }
     .stTextInput > div > div > input, .stSelectbox > div > div {
         border-radius: 14px !important;
@@ -263,13 +281,15 @@ st.markdown("""
     .stTextInput > div > div > input {
         background: rgba(255, 255, 255, 0.88) !important;
         border: 1px solid rgba(255, 255, 255, 0.22) !important;
-        color: #1b1b1b !important; min-height: 48px;
+        color: #1b1b1b !important; min-height: 44px;
     }
     .stTextInput > div > div > input::placeholder { color: #6b7280; }
     .stSelectbox > div > div { background: rgba(255, 255, 255, 0.88) !important; }
     .stButton > button {
-        width: 100%; min-height: 46px; border: none; border-radius: 14px;
-        font-weight: 700; transition: all 0.25s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        width: 100%; min-height: 42px; border: none; 
+        border-radius: 14px; font-weight: 700; 
+        transition: all 0.25s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        font-size: 0.92rem;
     }
     .stButton > button:hover { transform: translateY(-1px); }
     div[data-testid="stHorizontalBlock"] .stButton > button {
@@ -282,41 +302,47 @@ st.markdown("""
         background: linear-gradient(135deg, #d6b36a, #b38a3d); color: white;
     }
     .answer-box {
-        background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 18px; padding: 1rem 1.1rem; color: white; line-height: 1.55;
-        margin-top: 0.5rem;
+        background: rgba(255, 255, 255, 0.15); 
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 18px; padding: 1rem 1.1rem; 
+        color: white; line-height: 1.55; margin-top: 0.5rem;
     }
     .sources-box {
-        background: rgba(255, 255, 255, 0.10); border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 18px; padding: 0.9rem 1rem; margin-bottom: 0.8rem; color: white;
+        background: rgba(255, 255, 255, 0.10); 
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px; padding: 0.9rem 1rem; 
+        margin-bottom: 0.8rem; color: white;
     }
     .sources-box a { color: #f5d58b !important; text-decoration: none; }
     .sources-box a:hover { text-decoration: underline; }
     .audio-box {
-        background: rgba(255, 255, 255, 0.08); border-radius: 16px;
-        padding: 0.75rem; margin-top: 0.35rem;
+        background: rgba(255, 255, 255, 0.08); 
+        border-radius: 16px; padding: 0.75rem; 
+        margin-top: 0.35rem;
     }
     .stAudio { border-radius: 14px; overflow: hidden; }
     hr {
-        border: none; height: 1px; background: rgba(255, 255, 255, 0.15); margin: 1rem 0;
+        border: none; height: 1px; 
+        background: rgba(255, 255, 255, 0.15); margin: 0.9rem 0;
     }
-    .mic-only { padding: 0 !important; margin: 0 !important; }
     @media (max-width: 768px) {
-        .hero-wrap { padding: 1rem 1rem 1.05rem 1rem; border-radius: 20px; }
-        .hero-logo { height: 44px; margin-bottom: 0.3rem; }
+        .hero-wrap { padding: 0.85rem 1.1rem 0.9rem 1.1rem; border-radius: 20px; }
+        .hero-logo { height: 42px; margin-bottom: 0.25rem; }
         .hero-title { font-size: 1.55rem; }
-        .panel-card { padding: 1rem; }
+        .panel-card { padding: 0.95rem; }
     }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# HEADER (No subtitle)
+# HEADER (Compact - No subtitle)
 # -----------------------------
 st.markdown("""
-<div class="hero-wrap">
-    <img src="https://www.stillwater.you/images/logo.png" class="hero-logo" alt="StillWater Logo">
-    <div class="hero-title">""" + get_text("title") + """</div>
+<div class="main-shell">
+    <div class="hero-wrap">
+        <img src="https://www.stillwater.you/images/logo.png" class="hero-logo" alt="StillWater Logo">
+        <div class="hero-title">""" + get_text("title") + """</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -326,75 +352,81 @@ preset_questions = [
     "can type 2 diabetes be reversed"
 ]
 
-left, right = st.columns([1, 2], gap="large")
+col_lang1, col_lang2, col_voice = st.columns([1, 1, 0.8], gap="small")
+
+# Language selectors + Voice (compact row like your screenshot)
+with col_lang1:
+    input_lang = st.selectbox("🌐 Input", ["English", "Hindi"], 
+                            label_visibility="collapsed", key="input_lang")
+
+with col_lang2:
+    output_lang = st.selectbox("🔊 Output", ["English", "Hindi"], 
+                             label_visibility="collapsed", key="output_lang")
+
+with col_voice:
+    # Just mic icon - NO text, NO labels (exactly like your request)
+    audio_bytes = audio_recorder(pause_threshold=2.0, key="mic_only")
+
+# Voice processing
+if audio_bytes:
+    with st.spinner(get_text("processing")):
+        recognized_text = speech_to_text(
+            audio_bytes,
+            lang_code=lang_map[input_lang]["stt"]
+        )
+        st.session_state["selected_query"] = recognized_text
+    st.success(f"{get_text('recognized')} {recognized_text}", icon="✅")
+
+left, right = st.columns([1, 2.2], gap="large")
 
 # -----------------------------
-# LEFT PANEL - Voice Input (Just mic, no box/text)
+# LEFT PANEL - Sample buttons
 # -----------------------------
 with left:
     st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-    st.markdown(f'<div class="section-title">🎤 {get_text("voice_input")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-title">💡 {get_text("sample_questions")}</div>', unsafe_allow_html=True)
     
-    # Just the mic - no text box around it
-    audio_bytes = audio_recorder(pause_threshold=2.0)
+    c1, c2, c3 = st.columns(3, gap="small")
     
-    if audio_bytes:
-        with st.spinner(get_text("processing")):
-            input_lang = "English" if st.session_state.language == "English" else "Hindi"
-            recognized_text = speech_to_text(
-                audio_bytes,
-                lang_code=lang_map[input_lang]["stt"]
-            )
-            st.session_state["selected_query"] = recognized_text
-        st.success(f"{get_text('recognized')} {recognized_text}")
-
+    with c1:
+        if st.button(get_text("reduce_medicines"), use_container_width=True):
+            st.session_state["selected_query"] = preset_questions[0]
+    
+    with c2:
+        if st.button(get_text("type2_reversed"), use_container_width=True):
+            st.session_state["selected_query"] = preset_questions[1]
+    
+    with c3:
+        if st.button(get_text("diabetes_reversed"), use_container_width=True):
+            st.session_state["selected_query"] = preset_questions[2]
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # -----------------------------
-# RIGHT PANEL
+# RIGHT PANEL - Main chat
 # -----------------------------
 with right:
     st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-
-    st.markdown(f'<div class="section-title">💡 {get_text("sample_questions")}</div>', unsafe_allow_html=True)
-
-    c1, c2, c3 = st.columns(3)
-
-    with c1:
-        if st.button(get_text("reduce_medicines")):
-            st.session_state["selected_query"] = preset_questions[0]
-
-    with c2:
-        if st.button(get_text("type2_reversed")):
-            st.session_state["selected_query"] = preset_questions[1]
-
-    with c3:
-        if st.button(get_text("diabetes_reversed")):
-            st.session_state["selected_query"] = preset_questions[2]
-
-    st.markdown("<hr>", unsafe_allow_html=True)
-
+    
     default_query = st.session_state.get("selected_query", "")
     query = st.text_input(
         f"💬 {get_text('ask_question')}", 
-        value=default_query
+        value=default_query,
+        placeholder="e.g., How did patients reverse type 2 diabetes?"
     )
-
-    input_lang = "English" if st.session_state.language == "English" else "Hindi"
-    output_lang = input_lang  # Same as input language
-
-    if st.button(f"🚀 {get_text('ask_btn')}", type="primary"):
+    
+    if st.button(f"🚀 {get_text('ask_btn')}", key="ask", use_container_width=True, type="primary"):
         if query.strip():
             with st.spinner(get_text("thinking")):
                 result = ask_rag(query.strip(), top_k=3)
-
+            
             st.markdown(f'<div class="section-title">{get_text("answer")}</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="answer-box">{result["answer"]}</div>', unsafe_allow_html=True)
-
+            
             st.markdown("<hr>", unsafe_allow_html=True)
             st.markdown(f'<div class="section-title">{get_text("sources")}</div>', unsafe_allow_html=True)
-
-            for i, src in enumerate(result["sources"], start=1):
+            
+            for i, src in enumerate(result["sources"], 1):
                 st.markdown(
                     f"""
                     <div class="sources-box">
@@ -405,22 +437,22 @@ with right:
                     """,
                     unsafe_allow_html=True
                 )
-
+            
             st.markdown("<hr>", unsafe_allow_html=True)
             st.markdown(f'<div class="section-title">{get_text("voice_output")}</div>', unsafe_allow_html=True)
-
+            
             audio_file = text_to_speech(
                 result["answer"],
                 lang=lang_map[output_lang]["tts"]
             )
-
+            
             with open(audio_file, "rb") as f:
                 out_audio_bytes = f.read()
                 st.markdown('<div class="audio-box">', unsafe_allow_html=True)
                 st.audio(out_audio_bytes, format="audio/mp3")
                 st.markdown('</div>', unsafe_allow_html=True)
-
+            
             if os.path.exists(audio_file):
                 os.remove(audio_file)
-
+    
     st.markdown('</div>', unsafe_allow_html=True)
