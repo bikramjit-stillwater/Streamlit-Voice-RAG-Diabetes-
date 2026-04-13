@@ -73,6 +73,14 @@ lang_map = {
     "Hindi": {"stt": "hi-IN", "tts": "hi"}
 }
 
+# Language toggle - top right
+col_empty, col_lang = st.columns([3, 1])
+with col_lang:
+    st.session_state.language = st.selectbox(
+        "🌐", ["English", "Hindi"],
+        index=0 if st.session_state.language == "English" else 1
+    )
+
 # -----------------------------
 # Load and prepare data
 # -----------------------------
@@ -208,16 +216,6 @@ def text_to_speech(text, lang="en"):
 # -----------------------------
 st.markdown("""
 <style>
-    .stApp > div > div > div {
-        padding-top: 3rem !important;
-    }
-
-    .block-container {
-        padding-top: 2.5rem !important;
-        padding-bottom: 1rem;
-        max-width: 1220px;
-    }
-
     .stApp {
         background: linear-gradient(rgba(15, 18, 22, 0.48), rgba(15, 18, 22, 0.48)),
                     url('https://stillwater-main.onrender.com/images/c.png');
@@ -227,21 +225,26 @@ st.markdown("""
         background-attachment: fixed;
     }
 
+    .block-container {
+        padding-top: 0.7rem;
+        padding-bottom: 1rem;
+        max-width: 1220px;
+    }
+
     .hero-wrap {
         background: rgba(255, 255, 255, 0.10);
         backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.12);
         box-shadow: 0 10px 34px rgba(0, 0, 0, 0.18);
         border-radius: 24px;
-        padding: 1.5rem 1.2rem;
+        padding: 1rem 1.2rem;
         text-align: center;
-        margin-bottom: 1.2rem;
-        margin-top: 1rem;
+        margin-bottom: 0.8rem;
     }
 
     .hero-logo {
         height: 48px;
-        margin: 0 auto 0.5rem auto;
+        margin: 0 auto 0.3rem auto;
         display: block;
         object-fit: contain;
     }
@@ -261,9 +264,9 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.10);
         box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
         border-radius: 22px;
-        padding: 1.5rem;
+        padding: 1rem;
         color: white;
-        margin-top: 1rem;
+        margin-top: 0.45rem;
     }
 
     .section-title {
@@ -274,34 +277,18 @@ st.markdown("""
         line-height: 1.2;
     }
 
-    /* Default language style */
-    .lang-checkbox {
-        color: white !important;
-    }
-
-    .lang-checkbox .stRadio > label {
-        font-size: 0.9rem !important;
-        padding: 0.4rem 0.8rem !important;
-        margin: 0.1rem !important;
-        border-radius: 12px !important;
-        background: rgba(255, 255, 255, 0.20) !important;
-        border: 1px solid rgba(255, 255, 255, 0.30) !important;
-        font-weight: 600 !important;
-        min-height: auto !important;
-        white-space: nowrap;
-    }
-
-    .lang-checkbox .stRadio > label:hover {
-        background: rgba(255, 255, 255, 0.35) !important;
-    }
-
+    .stSelectbox label,
     .stTextInput label {
         color: #ffffff !important;
         font-weight: 600 !important;
     }
 
-    .stTextInput > div > div > input {
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div {
         border-radius: 16px !important;
+    }
+
+    .stTextInput > div > div > input {
         background: rgba(255, 255, 255, 0.88) !important;
         border: 1px solid rgba(255, 255, 255, 0.20) !important;
         color: #1b1b1b !important;
@@ -311,6 +298,10 @@ st.markdown("""
 
     .stTextInput > div > div > input::placeholder {
         color: #6b7280;
+    }
+
+    .stSelectbox > div > div {
+        background: rgba(255, 255, 255, 0.88) !important;
     }
 
     .stButton > button {
@@ -388,25 +379,26 @@ st.markdown("""
         margin: 0.9rem 0;
     }
 
-    /* Mic wrapper */
     .mic-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 8px;
+        background: transparent !important;
+    }
+
+    .mic-wrap > div {
+        background: transparent !important;
+    }
+
+    div[data-testid="stAudioRecorder"] {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        margin-top: 16px !important;
-        padding: 8px 0 !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-
-    /* Remove audio recorder surrounding box */
-    div[data-testid="stAudioRecorder"] {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
-        margin: 0 !important;
     }
 
     div[data-testid="stAudioRecorder"] > div {
@@ -414,7 +406,6 @@ st.markdown("""
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
-        margin: 0 !important;
     }
 
     div[data-testid="stAudioRecorder"] button {
@@ -427,6 +418,7 @@ st.markdown("""
         width: auto !important;
         height: auto !important;
         outline: none !important;
+        border-radius: 0 !important;
     }
 
     div[data-testid="stAudioRecorder"] button:hover,
@@ -439,68 +431,32 @@ st.markdown("""
         transform: none !important;
     }
 
-    /* Hide text labels inside recorder */
-    div[data-testid="stAudioRecorder"] p,
-    div[data-testid="stAudioRecorder"] span,
-    div[data-testid="stAudioRecorder"] label,
-    div[data-testid="stAudioRecorder"] small {
-        display: none !important;
-    }
-
-    /* Default mic size */
     div[data-testid="stAudioRecorder"] svg,
     div[data-testid="stAudioRecorder"] path {
-        width: 34px !important;
-        height: 34px !important;
+        fill: black !important;
+        stroke: black !important;
+        color: black !important;
+    }
+
+    div[data-testid="stAudioRecorder"] p,
+    div[data-testid="stAudioRecorder"] span,
+    div[data-testid="stAudioRecorder"] small {
+        display: none !important;
     }
 
     iframe {
         background: transparent !important;
     }
 
-    /* Light theme */
-    @media (prefers-color-scheme: light) {
-        div[data-testid="stAudioRecorder"] svg,
-        div[data-testid="stAudioRecorder"] path,
-        div[data-testid="stAudioRecorder"] [data-testid*="icon"] {
-            fill: #000000 !important;
-            stroke: #000000 !important;
-            color: #000000 !important;
-        }
-
-        .lang-checkbox .stRadio > label,
-        .lang-checkbox .stRadio > label > div,
-        .lang-checkbox .stRadio > label > span {
-            color: #111111 !important;
-        }
-    }
-
-    /* Dark theme */
-    @media (prefers-color-scheme: dark) {
-        div[data-testid="stAudioRecorder"] svg,
-        div[data-testid="stAudioRecorder"] path,
-        div[data-testid="stAudioRecorder"] [data-testid*="icon"] {
-            fill: #ffffff !important;
-            stroke: #ffffff !important;
-            color: #ffffff !important;
-        }
-
-        .lang-checkbox .stRadio > label,
-        .lang-checkbox .stRadio > label > div,
-        .lang-checkbox .stRadio > label > span {
-            color: #ffffff !important;
-        }
-    }
-
     @media (max-width: 768px) {
         .hero-wrap {
-            padding: 1.2rem 1rem;
+            padding: 0.9rem 0.9rem 1rem 0.9rem;
             border-radius: 20px;
-            margin-top: 1.5rem;
         }
 
         .hero-logo {
             height: 42px;
+            margin-bottom: 0.25rem;
         }
 
         .hero-title {
@@ -508,8 +464,7 @@ st.markdown("""
         }
 
         .panel-card {
-            padding: 1.2rem;
-            margin-top: 1.2rem;
+            padding: 0.9rem;
         }
     }
 </style>
@@ -532,24 +487,9 @@ preset_questions = [
 ]
 
 # -----------------------------
-# MAIN PANEL
+# MAIN PANEL - compact layout
 # -----------------------------
 st.markdown('<div class="panel-card">', unsafe_allow_html=True)
-
-st.markdown('<div style="padding: 1rem 0;">', unsafe_allow_html=True)
-col1, _ = st.columns([1, 4])
-with col1:
-    st.markdown('<div class="lang-checkbox">', unsafe_allow_html=True)
-    lang_option = st.radio(
-        "🌐",
-        ["English", "Hindi"],
-        index=0 if st.session_state.language == "English" else 1,
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    st.session_state.language = lang_option
-    st.markdown('</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown(f'<div class="section-title">💡 {get_text("sample_questions")}</div>', unsafe_allow_html=True)
 
@@ -575,7 +515,6 @@ query = st.text_input(
     value=default_query
 )
 
-# Microphone - only icon style
 st.markdown('<div class="mic-wrap">', unsafe_allow_html=True)
 audio_bytes = audio_recorder(
     text="",
