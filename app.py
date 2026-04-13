@@ -10,7 +10,11 @@ import speech_recognition as sr
 import tempfile
 import os
 
-st.set_page_config(page_title="Diabetes Testimonial Chatbot", layout="wide", page_icon="🌿")
+st.set_page_config(
+    page_title="Diabetes Testimonial Chatbot",
+    layout="wide",
+    page_icon="🌿"
+)
 
 # -----------------------------
 # Gemini setup
@@ -158,246 +162,245 @@ def text_to_speech(text, lang="en"):
         return tmp_file.name
 
 # -----------------------------
-# ADVANCED UI DESIGN - WEBSITE MATCHING THEME
+# THEME / UI
 # -----------------------------
 st.markdown("""
 <style>
-    /* Full page background with overlay */
     .stApp {
-        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-                    url('https://stillwater-main.onrender.com/images/c.png');
+        background:
+            linear-gradient(rgba(15, 18, 22, 0.50), rgba(15, 18, 22, 0.50)),
+            url('https://stillwater-main.onrender.com/images/c.png');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
         background-attachment: fixed;
-        min-height: 100vh;
     }
-    
-    /* Main container styling */
-    .main-container {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        padding: 2rem;
-        margin: 1rem;
+
+    .block-container {
+        padding-top: 1.2rem;
+        padding-bottom: 1rem;
+        max-width: 1250px;
     }
-    
-    /* Header styling */
-    .header-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20px;
-        padding: 2rem;
-        margin-bottom: 2rem;
+
+    .main-shell {
+        padding: 0.2rem 0.2rem 1rem 0.2rem;
+    }
+
+    .hero-wrap {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+        border-radius: 26px;
+        padding: 1.15rem 1.4rem 1.2rem 1.4rem;
         text-align: center;
-        color: white;
-        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
-    }
-    
-    .header-logo {
-        height: 70px;
         margin-bottom: 1rem;
-        filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
     }
-    
-    .header-title {
-        font-size: 2.2rem;
+
+    .hero-logo {
+        height: 54px;
+        margin: 0 auto 0.4rem auto;
+        display: block;
+        object-fit: contain;
+    }
+
+    .hero-title {
+        color: #f7f4ee;
+        font-size: 2.05rem;
+        line-height: 1.15;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 0.98rem;
+        line-height: 1.3;
+        font-weight: 500;
+        margin-top: 0.45rem;
+    }
+
+    .panel-card {
+        background: rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.14);
+        border-radius: 22px;
+        padding: 1.2rem;
+        color: white;
+        margin-top: 0.6rem;
+    }
+
+    .section-title {
+        color: #ffffff;
+        font-size: 1.08rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
-        background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        margin-bottom: 0.9rem;
+        line-height: 1.2;
     }
-    
-    .header-subtitle {
-        font-size: 1.1rem;
-        opacity: 0.95;
-        font-weight: 400;
+
+    .stSelectbox label,
+    .stTextInput label {
+        color: #ffffff !important;
+        font-weight: 600 !important;
     }
-    
-    /* Card styling */
-    .chat-card {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(20px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        padding: 2.5rem;
-        margin-bottom: 2rem;
-        transition: all 0.3s ease;
+
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div {
+        border-radius: 14px !important;
     }
-    
-    .chat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
-    }
-    
-    /* Language selectors */
-    .lang-selector {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        border-radius: 16px;
-        padding: 1rem 1.5rem;
-        text-align: center;
-        color: white;
-        font-weight: 600;
-        box-shadow: 0 10px 30px rgba(240, 147, 251, 0.4);
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 16px;
-        height: 56px;
-        font-weight: 600;
-        font-size: 1rem;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        transition: all 0.3s ease;
-        border: 2px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-    }
-    
-    /* Sample buttons */
-    .sample-btn {
-        width: 100%;
-        height: 60px;
-        border-radius: 16px;
-        font-weight: 600;
-        font-size: 0.95rem;
-        border: none;
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    
-    .sample1 .sample-btn { 
-        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-        color: #c44569;
-    }
-    
-    .sample2 .sample-btn { 
-        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-        color: #219653;
-    }
-    
-    .sample3 .sample-btn { 
-        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-        color: #ed8936;
-    }
-    
-    .sample-btn:hover {
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.25);
-    }
-    
-    /* Input styling */
+
     .stTextInput > div > div > input {
-        border-radius: 16px;
-        border: 2px solid rgba(102, 126, 234, 0.2);
-        padding: 1rem 1.5rem;
-        font-size: 1.1rem;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.88) !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        color: #1b1b1b !important;
+        min-height: 48px;
     }
-    
-    .stTextInput > div > div > input:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        transform: scale(1.02);
+
+    .stTextInput > div > div > input::placeholder {
+        color: #6b7280;
     }
-    
-    /* Response styling */
-    .response-answer {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        border-radius: 20px;
-        padding: 2rem;
-        border-left: 5px solid #667eea;
-        margin: 1.5rem 0;
-        backdrop-filter: blur(10px);
+
+    .stSelectbox > div > div {
+        background: rgba(255, 255, 255, 0.88) !important;
     }
-    
-    .source-item {
-        background: rgba(255, 255, 255, 0.7);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border: 1px solid rgba(102, 126, 234, 0.2);
-        transition: all 0.3s ease;
+
+    .stButton > button {
+        width: 100%;
+        min-height: 46px;
+        border: none;
+        border-radius: 14px;
+        font-weight: 700;
+        transition: all 0.25s ease;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
-    
-    .source-item:hover {
-        background: rgba(102, 126, 234, 0.08);
-        transform: translateX(5px);
+
+    .stButton > button:hover {
+        transform: translateY(-1px);
     }
-    
-    /* Audio recorder */
-    .audio-recorder {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20px;
-        padding: 2rem;
-        text-align: center;
+
+    div[data-testid="stHorizontalBlock"] .stButton > button {
+        background: rgba(255, 255, 255, 0.82);
+        color: #25313d;
+    }
+
+    div[data-testid="stHorizontalBlock"] .stButton > button:hover {
+        background: rgba(255, 255, 255, 0.96);
+    }
+
+    .ask-row .stButton > button,
+    div.stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #d6b36a, #b38a3d);
         color: white;
     }
-    
-    /* Success message */
-    .stSuccess {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        border-radius: 12px;
-        padding: 1rem;
-        border-left: 5px solid #059669;
+
+    .answer-box {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 18px;
+        padding: 1rem 1.1rem;
+        color: white;
+        line-height: 1.55;
+        margin-top: 0.5rem;
     }
-    
-    /* Metrics and spinners */
-    .stSpinner > div {
-        border-color: #667eea;
+
+    .sources-box {
+        background: rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        padding: 0.9rem 1rem;
+        margin-bottom: 0.8rem;
+        color: white;
     }
-    
-    /* Responsive adjustments */
+
+    .sources-box a {
+        color: #f5d58b !important;
+        text-decoration: none;
+    }
+
+    .sources-box a:hover {
+        text-decoration: underline;
+    }
+
+    .audio-box {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 0.75rem;
+        margin-top: 0.35rem;
+    }
+
+    .stAudio {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    hr {
+        border: none;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.15);
+        margin: 1rem 0;
+    }
+
+    .mini-note {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.92rem;
+        line-height: 1.35;
+        margin-top: -0.2rem;
+        margin-bottom: 0.7rem;
+    }
+
     @media (max-width: 768px) {
-        .main-container {
-            margin: 0.5rem;
-            padding: 1.5rem;
+        .hero-wrap {
+            padding: 1rem 1rem 1.05rem 1rem;
+            border-radius: 20px;
         }
-        
-        .header-title {
-            font-size: 1.8rem;
+
+        .hero-logo {
+            height: 44px;
+            margin-bottom: 0.3rem;
+        }
+
+        .hero-title {
+            font-size: 1.55rem;
+        }
+
+        .hero-subtitle {
+            font-size: 0.9rem;
+        }
+
+        .panel-card {
+            padding: 1rem;
         }
     }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# MAIN CONTENT
+# HEADER
 # -----------------------------
-# Header Section
 st.markdown("""
-<div class="header-section">
-    <img src="https://www.stillwater.you/images/logo.png" class="header-logo" alt="Stillwater Logo">
-    <div class="header-title">Diabetes Testimonial Chatbot</div>
-    <div class="header-subtitle">🌿 AI-powered insights from real patient stories</div>
+<div class="main-shell">
+    <div class="hero-wrap">
+        <img src="https://www.stillwater.you/images/logo.png" class="hero-logo" alt="StillWater Logo">
+        <div class="hero-title">Diabetes Testimonial Chatbot</div>
+        <div class="hero-subtitle">🌿 AI-powered insights from real patient stories</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Main container
-st.markdown('<div class="main-container">', unsafe_allow_html=True)
-
-# Language selectors
+# -----------------------------
+# LANGUAGE
+# -----------------------------
 col_lang1, col_lang2 = st.columns(2)
+
 with col_lang1:
-    st.markdown('<div class="lang-selector">🌐 Input Language</div>', unsafe_allow_html=True)
-    input_lang = st.selectbox("", ["English", "Hindi"], key="input_lang")
+    input_lang = st.selectbox("🌐 Input Language", ["English", "Hindi"])
 
 with col_lang2:
-    st.markdown('<div class="lang-selector">🔊 Output Voice Language</div>', unsafe_allow_html=True)
-    output_lang = st.selectbox("", ["English", "Hindi"], key="output_lang")
+    output_lang = st.selectbox("🔊 Output Voice Language", ["English", "Hindi"])
 
 lang_map = {
     "English": {"stt": "en-IN", "tts": "en"},
@@ -410,115 +413,97 @@ preset_questions = [
     "Find testimonials where patients describe how long they had diabetes"
 ]
 
-# Layout
-left, right = st.columns([1, 2])
+left, right = st.columns([1, 2], gap="large")
 
-# LEFT PANEL - Voice Input
+# -----------------------------
+# LEFT PANEL
+# -----------------------------
 with left:
-    st.markdown('<div class="chat-card">', unsafe_allow_html=True)
-    st.markdown("### 🎤 Voice Input")
-    st.markdown('<div class="audio-recorder">', unsafe_allow_html=True)
-    
+    st.markdown('<div class="panel-card">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">🎤 Voice Input</div>', unsafe_allow_html=True)
+    st.markdown('<div class="mini-note">Record your question using voice input.</div>', unsafe_allow_html=True)
+
+    # Fixed audio_recorder call
     audio_bytes = audio_recorder(
-        text="🎙️ Click & Speak", 
-        pause_threshold=2.0,
-        show_digits=True,
-        key="recorder"
+        text="Click to record",
+        pause_threshold=2.0
     )
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
+
     if audio_bytes:
-        with st.spinner("🔄 Processing speech..."):
-            recognized_text = speech_to_text(audio_bytes, lang_code=lang_map[input_lang]["stt"])
+        with st.spinner("Processing speech..."):
+            recognized_text = speech_to_text(
+                audio_bytes,
+                lang_code=lang_map[input_lang]["stt"]
+            )
             st.session_state["selected_query"] = recognized_text
-        st.success(f"✅ **Recognized:** {recognized_text}")
-    
+        st.success(f"Recognized: {recognized_text}")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-# RIGHT PANEL - Text Input & Controls
+# -----------------------------
+# RIGHT PANEL
+# -----------------------------
 with right:
-    st.markdown('<div class="chat-card">', unsafe_allow_html=True)
-    
-    st.markdown("### 💡 Quick Questions")
+    st.markdown('<div class="panel-card">', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-title">💡 Sample Questions</div>', unsafe_allow_html=True)
+
     c1, c2, c3 = st.columns(3)
-    
+
     with c1:
-        st.markdown('<div class="sample1">', unsafe_allow_html=True)
-        if st.button("💊 Reduce medicines", key="btn1", help=preset_questions[0]):
+        if st.button("Reduce medicines"):
             st.session_state["selected_query"] = preset_questions[0]
-        st.markdown('</div>', unsafe_allow_html=True)
-    
+
     with c2:
-        st.markdown('<div class="sample2">', unsafe_allow_html=True)
-        if st.button("🌱 Plant diet helps", key="btn2", help=preset_questions[1]):
+        if st.button("Plant diet helps"):
             st.session_state["selected_query"] = preset_questions[1]
-        st.markdown('</div>', unsafe_allow_html=True)
-    
+
     with c3:
-        st.markdown('<div class="sample3">', unsafe_allow_html=True)
-        if st.button("⏱️ Duration", key="btn3", help=preset_questions[2]):
+        if st.button("Duration"):
             st.session_state["selected_query"] = preset_questions[2]
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
+
+    st.markdown("<hr>", unsafe_allow_html=True)
+
     default_query = st.session_state.get("selected_query", "")
-    query = st.text_input(
-        "💬 Ask about patient testimonials...", 
-        value=default_query, 
-        placeholder="e.g., How did plant-based diet help diabetes patients?",
-        key="query_input"
-    )
-    
-    if st.button("🚀 Get Insights", type="primary"):
-        if query.strip():
-            with st.spinner("🤔 Analyzing testimonials..."):
-                result = ask_rag(query.strip(), top_k=3)
-            
-            # Answer
-            st.markdown('<div class="response-answer">', unsafe_allow_html=True)
-            st.markdown(f"### 🧠 **AI Answer**")
-            st.markdown(result["answer"])
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Sources
-            st.markdown("### 📚 **Sources Found**")
-            for i, src in enumerate(result["sources"], start=1):
-                st.markdown(f"""
-                <div class="source-item">
-                    <h4><strong>{i}.</strong> {src['title']}</h4>
-                    <a href="{src['url']}" target="_blank">🔗 View Testimonial</a> 
-                    • ⭐ **Score:** {round(src['score']*100, 1)}%
+    query = st.text_input("💬 Ask your question", value=default_query)
+
+    if st.button("🚀 Ask") and query.strip():
+        with st.spinner("Thinking..."):
+            result = ask_rag(query.strip(), top_k=3)
+
+        st.markdown('<div class="section-title">🧠 Answer</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="answer-box">{result["answer"]}</div>', unsafe_allow_html=True)
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📚 Sources</div>', unsafe_allow_html=True)
+
+        for i, src in enumerate(result["sources"], start=1):
+            st.markdown(
+                f"""
+                <div class="sources-box">
+                    <strong>{i}. {src['title']}</strong><br>
+                    🔗 <a href="{src['url']}" target="_blank">{src['url']}</a><br>
+                    ⭐ Score: {round(src['score'], 4)}
                 </div>
-                """, unsafe_allow_html=True)
-            
-            # Voice Output
-            st.markdown("### 🔊 **Listen to Answer**")
-            audio_file = text_to_speech(result["answer"], lang=lang_map[output_lang]["tts"])
-            
-            with open(audio_file, "rb") as f:
-                audio_bytes = f.read()
-                st.audio(audio_bytes, format="audio/mp3")
-            
-            if os.path.exists(audio_file):
-                os.remove(audio_file)
-    
+                """,
+                unsafe_allow_html=True
+            )
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🔊 Voice Output</div>', unsafe_allow_html=True)
+
+        audio_file = text_to_speech(
+            result["answer"],
+            lang=lang_map[output_lang]["tts"]
+        )
+
+        with open(audio_file, "rb") as f:
+            out_audio_bytes = f.read()
+            st.markdown('<div class="audio-box">', unsafe_allow_html=True)
+            st.audio(out_audio_bytes, format="audio/mp3")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        if os.path.exists(audio_file):
+            os.remove(audio_file)
+
     st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Footer
-st.markdown("""
-<div style='
-    text-align: center; 
-    padding: 2rem; 
-    color: rgba(255,255,255,0.8); 
-    font-size: 0.9rem;
-    background: rgba(0,0,0,0.1);
-    border-radius: 20px;
-    margin: 2rem 1rem 1rem 1rem;
-'>
-    🌿 Powered by Stillwater AI • Real stories, real insights
-</div>
-""", unsafe_allow_html=True)
