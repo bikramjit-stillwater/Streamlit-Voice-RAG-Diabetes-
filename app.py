@@ -73,154 +73,212 @@ lang_map = {
     "Hindi": {"stt": "hi-IN", "tts": "hi"}
 }
 
+# ❌ REMOVED TOP LANGUAGE DROPDOWN
+
 # -----------------------------
-# Load RAG
+# Load and prepare data
 # -----------------------------
 @st.cache_resource
 def load_rag_system():
-    df = pd.read_csv("diabetes_testimonials_only.csv")
-    df = df[["title", "url", "transcript"]].fillna("").astype(str)
+    csv_path = "diabetes_testimonials_only.csv"
+    df = pd.read_csv(csv_path)
+    df = df[["title", "url", "transcript"]].copy()
+
+    df["title"] = df["title"].fillna("").astype(str).str.strip()
+    df["url"] = df["url"].fillna("").astype(str).str.strip()
+    df["transcript"] = df["transcript"].fillna("").astype(str).str.strip()
+
+    df = df[df["transcript"] != ""].reset_index(drop=True)
 
     documents = []
     for i, row in df.iterrows():
+        doc_text = f"""TITLE: {row['title']}
+URL: {row['url']}
+TRANSCRIPT:
+{row['transcript']}"""
+
         documents.append({
             "doc_id": i,
             "title": row["title"],
             "url": row["url"],
-            "text": row["transcript"]
+            "text": doc_text
         })
 
     embed_model = SentenceTransformer("all-MiniLM-L6-v2")
-    embeddings = embed_model.encode(
-        [d["text"] for d in documents],
+    doc_texts = [d["text"] for d in documents]
+    doc_embeddings = embed_model.encode(
+        doc_texts,
         convert_to_numpy=True,
         normalize_embeddings=True
     )
 
-    index = faiss.IndexFlatIP(embeddings.shape[1])
-    index.add(embeddings.astype("float32"))
+    dimension = doc_embeddings.shape[1]
+    index = faiss.IndexFlatIP(dimension)
+    index.add(doc_embeddings.astype("float32"))
 
     return documents, embed_model, index
 
 documents, embed_model, index = load_rag_system()
 
 # -----------------------------
-# Retrieval
+# Retrieval & RAG
 # -----------------------------
 def retrieve(query, top_k=3):
-    q_emb = embed_model.encode([query], convert_to_numpy=True, normalize_embeddings=True)
-    scores, indices = index.search(q_emb.astype("float32"), top_k)
+    q_emb = embed_model.encode(
+        [query],
+        convert_to_numpy=True,
+        normalize_embeddings=True
+    ).astype("float32")
 
-    return [
-        {**documents[idx], "score": float(score)}
-        for score, idx in zip(scores[0], indices[0]) if idx != -1
-    ]
+    scores, indices = index.search(q_emb, top_k)
 
-def ask_rag(query):
-    results = retrieve(query)
+    results = []
+    for score, idx in zip(scores[0], indices[0]):
+        if idx == -1:
+            continue
+        item = documents[idx].copy()
+        item["score"] = float(score)
+        results.append(item)
 
-    context = "\n\n".join([r["text"] for r in results])
+    return results
+
+def ask_rag(query, top_k=3):
+    results = retrieve(query, top_k=top_k)
+    context = "\n\n".join([
+        f"""SOURCE {i+1}
+TITLE: {r['title']}
+URL: {r['url']}
+CONTENT:
+{r['text']}"""
+        for i, r in enumerate(results)
+    ])
 
     prompt = f"""
-Answer only from context.
-If unclear say NOT FOUND.
+You are a testimonial-based assistant.
 
-Question: {query}
-Context: {context}
+Rules:
+1. Answer only from the provided testimonial context.
+2. If the answer is not clearly present, say: "Not found clearly in the testimonials."
+3. Do not give medical advice.
+4. Mention relevant source title and URL.
+5. Keep the answer clear and short.
+
+User question:
+{query}
+
+Context:
+{context}
 """
 
     response = model.generate_content(prompt)
-
     return {
         "answer": response.text,
-        "sources": results
+        "sources": [
+            {"title": r["title"], "url": r["url"], "score": r["score"]}
+            for r in results
+        ]
     }
 
 # -----------------------------
-# Voice
+# Voice helpers
 # -----------------------------
 def speech_to_text(audio_bytes, lang_code="en-IN"):
-    r = sr.Recognizer()
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as f:
-        f.write(audio_bytes)
-        path = f.name
+    recognizer = sr.Recognizer()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
+        tmp_file.write(audio_bytes)
+        tmp_path = tmp_file.name
 
     try:
-        with sr.AudioFile(path) as src:
-            audio = r.record(src)
-            return r.recognize_google(audio, language=lang_code)
-    except:
-        return "Error"
+        with sr.AudioFile(tmp_path) as source:
+            audio = recognizer.record(source)
+            text = recognizer.recognize_google(audio, language=lang_code)
+        return text
+    except Exception as e:
+        return f"Speech recognition failed: {str(e)}"
     finally:
-        os.remove(path)
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 def text_to_speech(text, lang="en"):
     tts = gTTS(text=text, lang=lang)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as f:
-        tts.save(f.name)
-        return f.name
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_file:
+        tts.save(tmp_file.name)
+        return tmp_file.name
 
 # -----------------------------
-# UI FIXES (IMPORTANT)
+# THEME / UI
 # -----------------------------
 st.markdown("""
 <style>
+    .block-container {
+        padding-top: 100px !important;
+    }
 
-/* PUSH DOWN UI */
-.block-container {
-    padding-top: 120px !important;
-}
-
-/* BOTTOM LANGUAGE TOGGLE */
-.lang-toggle {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(0,0,0,0.5);
-    padding: 6px 12px;
-    border-radius: 20px;
-    color: white;
-    font-size: 12px;
-    backdrop-filter: blur(6px);
-    z-index: 9999;
-}
-
+    .lang-toggle-box {
+        position: fixed;
+        bottom: 18px;
+        left: 18px;
+        z-index: 9999;
+        background: rgba(0,0,0,0.45);
+        padding: 6px 10px;
+        border-radius: 18px;
+        font-size: 12px;
+        color: white;
+        backdrop-filter: blur(6px);
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# HEADER
+# HEADER (UNCHANGED)
 # -----------------------------
-st.markdown(f"""
-<div style="text-align:center; color:white; font-size:28px; font-weight:bold;">
-{get_text("title")}
+st.markdown("""
+<div class="hero-wrap">
+    <img src="https://www.stillwater.you/images/logo.png" class="hero-logo">
+    <div class="hero-title">""" + get_text("title") + """</div>
 </div>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# INPUT
+# MAIN UI (UNCHANGED)
 # -----------------------------
+st.markdown('<div class="panel-card">', unsafe_allow_html=True)
+
+st.markdown(f'<div class="section-title">💡 {get_text("sample_questions")}</div>', unsafe_allow_html=True)
+
+c1, c2, c3 = st.columns(3)
+
+with c1:
+    if st.button(get_text("reduce_medicines")):
+        st.session_state["selected_query"] = "reduce medicines"
+
+with c2:
+    if st.button(get_text("type2_reversed")):
+        st.session_state["selected_query"] = "type 2 reversed"
+
+with c3:
+    if st.button(get_text("diabetes_reversed")):
+        st.session_state["selected_query"] = "can type 2 be reversed"
+
 query = st.text_input(get_text("ask_question"))
 
-audio = audio_recorder()
+audio_bytes = audio_recorder()
 
-if audio:
-    query = speech_to_text(audio)
+if audio_bytes:
+    query = speech_to_text(audio_bytes)
 
-# -----------------------------
-# ASK
-# -----------------------------
 if st.button(get_text("ask_btn")):
     result = ask_rag(query)
-
     st.write(result["answer"])
 
-# -----------------------------
-# BOTTOM LANGUAGE TOGGLE
-# -----------------------------
-st.markdown('<div class="lang-toggle">🌐 हिंदी</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
-if st.checkbox("Switch to Hindi"):
+# -----------------------------
+# ✅ BOTTOM LANGUAGE TOGGLE
+# -----------------------------
+st.markdown('<div class="lang-toggle-box">🌐 हिंदी</div>', unsafe_allow_html=True)
+
+if st.checkbox("Hindi", key="lang_toggle"):
     st.session_state.language = "Hindi"
 else:
     st.session_state.language = "English"
