@@ -505,8 +505,8 @@ query = st.text_input(
 st.markdown('<div class="mic-wrap">', unsafe_allow_html=True)
 audio_bytes = audio_recorder(
     text="",
-    recording_color="#e74c3c",
-    neutral_color="#ffffff",
+    recording_color="#000000",
+    neutral_color="#000000",
     icon_name="microphone",
     icon_size="2x",
     pause_threshold=2.0
