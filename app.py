@@ -275,8 +275,8 @@ st.markdown("""
     }
 
     /* Default language style */
-    .lang-checkbox {
-        color: white !important;
+    lang-checkbox * {
+        color: #FFFFFF !important;
     }
 
     .lang-checkbox .stRadio > label {
