@@ -225,11 +225,22 @@ st.markdown("""
         background-attachment: fixed;
     }
 
+    # .block-container {
+    #     padding-top: 0.7rem;
+    #     padding-bottom: 1rem;
+    #     max-width: 1220px;
+    # }
+
     .block-container {
-        padding-top: 0.7rem;
-        padding-bottom: 1rem;
-        max-width: 1220px;
-    }
+    padding-top: 0.7rem;
+    padding-bottom: 1rem;
+    max-width: 1220px;
+
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
 
     .hero-wrap {
         background: rgba(255, 255, 255, 0.10);
