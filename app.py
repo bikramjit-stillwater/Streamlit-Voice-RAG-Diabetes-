@@ -208,12 +208,310 @@ def text_to_speech(text, lang="en"):
 # -----------------------------
 st.markdown("""
 <style>
-
-    /* ✅ FIXED LANGUAGE COLOR */
-    .lang-checkbox [data-baseweb="radio"] span {
-        color: #FFFFFF !important;
+    .stApp > div > div > div {
+        padding-top: 3rem !important;
     }
 
+    .block-container {
+        padding-top: 2.5rem !important;
+        padding-bottom: 1rem;
+        max-width: 1220px;
+    }
+
+    .stApp {
+        background: linear-gradient(rgba(15, 18, 22, 0.48), rgba(15, 18, 22, 0.48)),
+                    url('https://stillwater-main.onrender.com/images/c.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+
+    .hero-wrap {
+        background: rgba(255, 255, 255, 0.10);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 10px 34px rgba(0, 0, 0, 0.18);
+        border-radius: 24px;
+        padding: 1.5rem 1.2rem;
+        text-align: center;
+        margin-bottom: 1.2rem;
+        margin-top: 1rem;
+    }
+
+    .hero-logo {
+        height: 48px;
+        margin: 0 auto 0.5rem auto;
+        display: block;
+        object-fit: contain;
+    }
+
+    .hero-title {
+        color: #f7f4ee;
+        font-size: 1.9rem;
+        line-height: 1.15;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    .panel-card {
+        background: rgba(255, 255, 255, 0.11);
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+        border-radius: 22px;
+        padding: 1.5rem;
+        color: white;
+        margin-top: 1rem;
+    }
+
+    .section-title {
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        line-height: 1.2;
+    }
+
+    /* Default language style */
+    .lang-checkbox {
+        color: white !important;
+    }
+
+    .lang-checkbox .stRadio > label {
+        font-size: 0.9rem !important;
+        padding: 0.4rem 0.8rem !important;
+        margin: 0.1rem !important;
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.20) !important;
+        border: 1px solid rgba(255, 255, 255, 0.30) !important;
+        font-weight: 600 !important;
+        min-height: auto !important;
+        white-space: nowrap;
+    }
+
+    .lang-checkbox .stRadio > label:hover {
+        background: rgba(255, 255, 255, 0.35) !important;
+    }
+
+    .stTextInput label {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
+
+    .stTextInput > div > div > input {
+        border-radius: 16px !important;
+        background: rgba(255, 255, 255, 0.88) !important;
+        border: 1px solid rgba(255, 255, 255, 0.20) !important;
+        color: #1b1b1b !important;
+        min-height: 46px;
+        padding-left: 0.9rem !important;
+    }
+
+    .stTextInput > div > div > input::placeholder {
+        color: #6b7280;
+    }
+
+    .stButton > button {
+        width: 100%;
+        min-height: 44px;
+        border: none;
+        border-radius: 16px;
+        font-weight: 700;
+        transition: all 0.25s ease;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.10);
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-1px);
+    }
+
+    div[data-testid="stHorizontalBlock"] .stButton > button {
+        background: rgba(255, 255, 255, 0.82);
+        color: #25313d;
+    }
+
+    div[data-testid="stHorizontalBlock"] .stButton > button:hover {
+        background: rgba(255, 255, 255, 0.96);
+    }
+
+    div.stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #d6b36a, #b38a3d);
+        color: white;
+    }
+
+    .answer-box {
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        padding: 1rem 1.05rem;
+        color: white;
+        line-height: 1.55;
+        margin-top: 0.45rem;
+    }
+
+    .sources-box {
+        background: rgba(255, 255, 255, 0.09);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 16px;
+        padding: 0.85rem 0.95rem;
+        margin-bottom: 0.7rem;
+        color: white;
+    }
+
+    .sources-box a {
+        color: #f5d58b !important;
+        text-decoration: none;
+    }
+
+    .sources-box a:hover {
+        text-decoration: underline;
+    }
+
+    .audio-box {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 0.7rem;
+        margin-top: 0.35rem;
+    }
+
+    .stAudio {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    hr {
+        border: none;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.14);
+        margin: 0.9rem 0;
+    }
+
+    /* Mic wrapper */
+    .mic-wrap {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin-top: 16px !important;
+        padding: 8px 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Remove audio recorder surrounding box */
+    div[data-testid="stAudioRecorder"] {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    div[data-testid="stAudioRecorder"] > div {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    div[data-testid="stAudioRecorder"] button {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height: auto !important;
+        width: auto !important;
+        height: auto !important;
+        outline: none !important;
+    }
+
+    div[data-testid="stAudioRecorder"] button:hover,
+    div[data-testid="stAudioRecorder"] button:focus,
+    div[data-testid="stAudioRecorder"] button:active {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        transform: none !important;
+    }
+
+    /* Hide text labels inside recorder */
+    div[data-testid="stAudioRecorder"] p,
+    div[data-testid="stAudioRecorder"] span,
+    div[data-testid="stAudioRecorder"] label,
+    div[data-testid="stAudioRecorder"] small {
+        display: none !important;
+    }
+
+    /* Default mic size */
+    div[data-testid="stAudioRecorder"] svg,
+    div[data-testid="stAudioRecorder"] path {
+        width: 34px !important;
+        height: 34px !important;
+    }
+
+    iframe {
+        background: transparent !important;
+    }
+
+    /* Light theme */
+    @media (prefers-color-scheme: light) {
+        div[data-testid="stAudioRecorder"] svg,
+        div[data-testid="stAudioRecorder"] path,
+        div[data-testid="stAudioRecorder"] [data-testid*="icon"] {
+            fill: #000000 !important;
+            stroke: #000000 !important;
+            color: #000000 !important;
+        }
+
+        .lang-checkbox .stRadio > label,
+        .lang-checkbox .stRadio > label > div,
+        .lang-checkbox .stRadio > label > span {
+            color: #111111 !important;
+        }
+    }
+
+    /* Dark theme */
+    @media (prefers-color-scheme: dark) {
+        div[data-testid="stAudioRecorder"] svg,
+        div[data-testid="stAudioRecorder"] path,
+        div[data-testid="stAudioRecorder"] [data-testid*="icon"] {
+            fill: #ffffff !important;
+            stroke: #ffffff !important;
+            color: #ffffff !important;
+        }
+
+        .lang-checkbox .stRadio > label,
+        .lang-checkbox .stRadio > label > div,
+        .lang-checkbox .stRadio > label > span {
+            color: #ffffff !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-wrap {
+            padding: 1.2rem 1rem;
+            border-radius: 20px;
+            margin-top: 1.5rem;
+        }
+
+        .hero-logo {
+            height: 42px;
+        }
+
+        .hero-title {
+            font-size: 1.45rem;
+        }
+
+        .panel-card {
+            padding: 1.2rem;
+            margin-top: 1.2rem;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -277,22 +575,70 @@ query = st.text_input(
     value=default_query
 )
 
-# Microphone
+# Microphone - only icon style
 st.markdown('<div class="mic-wrap">', unsafe_allow_html=True)
-audio_bytes = audio_recorder(text="")
+audio_bytes = audio_recorder(
+    text="",
+    recording_color="#000000",
+    neutral_color="#000000",
+    icon_name="microphone",
+    icon_size="2x",
+    pause_threshold=2.0
+)
 st.markdown('</div>', unsafe_allow_html=True)
 
 if audio_bytes:
     with st.spinner(get_text("processing")):
-        recognized_text = speech_to_text(audio_bytes)
+        input_lang = "English" if st.session_state.language == "English" else "Hindi"
+        recognized_text = speech_to_text(
+            audio_bytes,
+            lang_code=lang_map[input_lang]["stt"]
+        )
+        st.session_state["selected_query"] = recognized_text
         query = recognized_text
     st.success(f"{get_text('recognized')} {recognized_text}")
+
+input_lang = "English" if st.session_state.language == "English" else "Hindi"
+output_lang = input_lang
 
 if st.button(f"🚀 {get_text('ask_btn')}", type="primary"):
     if query.strip():
         with st.spinner(get_text("thinking")):
             result = ask_rag(query.strip(), top_k=3)
 
-        st.markdown(result["answer"])
+        st.markdown(f'<div class="section-title">{get_text("answer")}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="answer-box">{result["answer"]}</div>', unsafe_allow_html=True)
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown(f'<div class="section-title">{get_text("sources")}</div>', unsafe_allow_html=True)
+
+        for i, src in enumerate(result["sources"], start=1):
+            st.markdown(
+                f"""
+                <div class="sources-box">
+                    <strong>{i}. {src['title']}</strong><br>
+                    🔗 <a href="{src['url']}" target="_blank">{src['url']}</a><br>
+                    ⭐ {get_text('score')} {round(src['score'], 4)}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown(f'<div class="section-title">{get_text("voice_output")}</div>', unsafe_allow_html=True)
+
+        audio_file = text_to_speech(
+            result["answer"],
+            lang=lang_map[output_lang]["tts"]
+        )
+
+        with open(audio_file, "rb") as f:
+            out_audio_bytes = f.read()
+            st.markdown('<div class="audio-box">', unsafe_allow_html=True)
+            st.audio(out_audio_bytes, format="audio/mp3")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        if os.path.exists(audio_file):
+            os.remove(audio_file)
 
 st.markdown('</div>', unsafe_allow_html=True)
