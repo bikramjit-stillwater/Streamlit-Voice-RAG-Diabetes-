@@ -29,6 +29,9 @@ model = genai.GenerativeModel("models/gemini-2.5-flash")
 if "language" not in st.session_state:
     st.session_state.language = "English"
 
+if "selected_query" not in st.session_state:
+    st.session_state.selected_query = ""
+
 def get_text(key):
     texts = {
         "english": {
@@ -37,7 +40,7 @@ def get_text(key):
             "sample_questions": "Sample Questions",
             "reduce_medicines": "Reduce Medicines",
             "type2_reversed": "Type 2 Reversed",
-            "diabetes_reversed": "Can Type 2 be Reversed?",
+            "diabetes_reversed": "Can Type 2 Be Reversed?",
             "ask_question": "Ask your question",
             "ask_btn": "Ask",
             "answer": "Answer",
@@ -46,14 +49,17 @@ def get_text(key):
             "recognized": "Recognized:",
             "processing": "Processing speech...",
             "thinking": "Thinking...",
-            "score": "Score:"
+            "score": "Score:",
+            "tts_failed": "Voice output failed.",
+            "stt_failed": "Speech recognition failed.",
+            "no_answer": "Not found clearly in the testimonials."
         },
         "hindi": {
             "title": "शरण संवादात्मक कृत्रिम बुद्धिमत्ता",
             "voice_input": "वॉइस इनपुट",
             "sample_questions": "नमूना प्रश्न",
             "reduce_medicines": "दवा कम करें",
-            "type2_reversed": "टाइप 2 उलटा",
+            "type2_reversed": "टाइप 2 कम हुआ",
             "diabetes_reversed": "क्या टाइप 2 उलटा हो सकता है?",
             "ask_question": "अपना प्रश्न पूछें",
             "ask_btn": "पूछें",
@@ -61,23 +67,29 @@ def get_text(key):
             "sources": "स्रोत",
             "voice_output": "वॉइस आउटपुट",
             "recognized": "पहचाना गया:",
-            "processing": "आवाज प्रोसेस हो रही...",
-            "thinking": "सोच रहे हैं...",
-            "score": "स्कोर:"
+            "processing": "आवाज़ प्रोसेस हो रही है...",
+            "thinking": "सोचा जा रहा है...",
+            "score": "स्कोर:",
+            "tts_failed": "वॉइस आउटपुट विफल रहा।",
+            "stt_failed": "स्पीच पहचान विफल रही।",
+            "no_answer": "यह जानकारी प्रशंसापत्रों में स्पष्ट रूप से नहीं मिली।"
         }
     }
     return texts[st.session_state.language.lower()][key]
 
 lang_map = {
-    "English": {"stt": "en-IN", "tts": "en"},
-    "Hindi": {"stt": "hi-IN", "tts": "hi"}
+    "English": {"stt": "en-IN", "tts": "en", "query_hint": "en"},
+    "Hindi": {"stt": "hi-IN", "tts": "hi", "query_hint": "hi"}
 }
 
-# Language toggle - top right
+# -----------------------------
+# Language toggle
+# -----------------------------
 col_empty, col_lang = st.columns([3, 1])
 with col_lang:
     st.session_state.language = st.selectbox(
-        "🌐", ["English", "Hindi"],
+        "🌐",
+        ["English", "Hindi"],
         index=0 if st.session_state.language == "English" else 1
     )
 
@@ -127,8 +139,26 @@ TRANSCRIPT:
 documents, embed_model, index = load_rag_system()
 
 # -----------------------------
-# Retrieval & RAG
+# Helpers
 # -----------------------------
+def detect_language_from_ui():
+    return st.session_state.language
+
+def translate_query_for_retrieval(query, target_language="English"):
+    if target_language == "Hindi":
+        prompt = f"""
+Translate the following Hindi question into simple English for semantic retrieval.
+Return only the translated English sentence.
+Question: {query}
+"""
+        try:
+            response = model.generate_content(prompt)
+            translated = response.text.strip()
+            return translated if translated else query
+        except Exception:
+            return query
+    return query
+
 def retrieve(query, top_k=3):
     q_emb = embed_model.encode(
         [query],
@@ -148,8 +178,10 @@ def retrieve(query, top_k=3):
 
     return results
 
-def ask_rag(query, top_k=3):
-    results = retrieve(query, top_k=top_k)
+def ask_rag(query, top_k=3, answer_language="English"):
+    retrieval_query = translate_query_for_retrieval(query, target_language=answer_language)
+    results = retrieve(retrieval_query, top_k=top_k)
+
     context = "\n\n".join([
         f"""SOURCE {i+1}
 TITLE: {r['title']}
@@ -159,15 +191,32 @@ CONTENT:
         for i, r in enumerate(results)
     ])
 
+    if answer_language == "Hindi":
+        language_instruction = f"""
+Answer only in Hindi.
+Use simple, natural Hindi.
+Do not answer in English.
+If title or URL is in English, keep them unchanged.
+If the answer is not clearly present, say exactly:
+"{get_text('no_answer')}"
+"""
+    else:
+        language_instruction = f"""
+Answer only in English.
+If the answer is not clearly present, say exactly:
+"{get_text('no_answer')}"
+"""
+
     prompt = f"""
 You are a testimonial-based assistant.
 
 Rules:
 1. Answer only from the provided testimonial context.
-2. If the answer is not clearly present, say: "Not found clearly in the testimonials."
+2. If the answer is not clearly present, respond with the exact fallback sentence.
 3. Do not give medical advice.
-4. Mention relevant source title and URL.
+4. Mention relevant source title and URL in the answer.
 5. Keep the answer clear and short.
+6. {language_instruction}
 
 User question:
 {query}
@@ -176,9 +225,14 @@ Context:
 {context}
 """
 
-    response = model.generate_content(prompt)
+    try:
+        response = model.generate_content(prompt)
+        answer_text = response.text.strip() if response.text else get_text("no_answer")
+    except Exception:
+        answer_text = get_text("no_answer")
+
     return {
-        "answer": response.text,
+        "answer": answer_text,
         "sources": [
             {"title": r["title"], "url": r["url"], "score": r["score"]}
             for r in results
@@ -190,29 +244,40 @@ Context:
 # -----------------------------
 def speech_to_text(audio_bytes, lang_code="en-IN"):
     recognizer = sr.Recognizer()
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
         tmp_file.write(audio_bytes)
         tmp_path = tmp_file.name
 
     try:
         with sr.AudioFile(tmp_path) as source:
+            recognizer.adjust_for_ambient_noise(source, duration=0.5)
             audio = recognizer.record(source)
-            text = recognizer.recognize_google(audio, language=lang_code)
+
+        text = recognizer.recognize_google(audio, language=lang_code)
         return text
+
+    except sr.UnknownValueError:
+        return "Could not understand audio." if lang_code == "en-IN" else "ऑडियो समझ में नहीं आया।"
+    except sr.RequestError as e:
+        return f"Speech service error: {e}" if lang_code == "en-IN" else f"स्पीच सेवा त्रुटि: {e}"
     except Exception as e:
-        return f"Speech recognition failed: {str(e)}"
+        return f"Speech recognition failed: {str(e)}" if lang_code == "en-IN" else f"स्पीच पहचान विफल रही: {str(e)}"
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
 
 def text_to_speech(text, lang="en"):
-    tts = gTTS(text=text, lang=lang)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_file:
-        tts.save(tmp_file.name)
-        return tmp_file.name
+    try:
+        tts = gTTS(text=text, lang=lang, slow=False)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_file:
+            tts.save(tmp_file.name)
+            return tmp_file.name
+    except Exception:
+        return None
 
 # -----------------------------
-# THEME / UI
+# Theme / UI
 # -----------------------------
 st.markdown("""
 <style>
@@ -230,8 +295,6 @@ st.markdown("""
         padding-bottom: 1rem;
         max-width: 1220px;
     }
-
-    
 
     .hero-wrap {
         background: rgba(255, 255, 255, 0.10);
@@ -388,14 +451,6 @@ st.markdown("""
         align-items: center;
     }
 
-    .mic-note {
-        margin-top: 0.45rem;
-        text-align: center;
-        color: #f3f4f6;
-        font-size: 0.92rem;
-        font-weight: 500;
-    }
-
     div[data-testid="stAudioRecorder"] {
         display: flex;
         justify-content: center;
@@ -422,10 +477,7 @@ st.markdown("""
         transform: scale(1.03);
     }
 
-    div[data-testid="stAudioRecorder"] p {
-        display: none !important;
-    }
-
+    div[data-testid="stAudioRecorder"] p,
     div[data-testid="stAudioRecorder"] span {
         display: none !important;
     }
@@ -459,23 +511,32 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# HEADER
+# Header
 # -----------------------------
-st.markdown("""
+st.markdown(f"""
 <div class="hero-wrap">
     <img src="https://www.stillwater.you/images/logo.png" class="hero-logo" alt="StillWater Logo">
-    <div class="hero-title">""" + get_text("title") + """</div>
+    <div class="hero-title">{get_text("title")}</div>
 </div>
 """, unsafe_allow_html=True)
 
-preset_questions = [
-    "Find testimonials where people reduced diabetes medicine after switching to plant-based diet",
-    "Give me testimonial of patient who have reduce type 2 diabetes",
-    "can type 2 diabetes be reversed"
-]
+preset_questions_map = {
+    "English": [
+        "Find testimonials where people reduced diabetes medicine after switching to plant-based diet",
+        "Give me testimonial of patient who reduced type 2 diabetes",
+        "Can type 2 diabetes be reversed?"
+    ],
+    "Hindi": [
+        "ऐसे प्रशंसापत्र खोजें जहाँ लोगों ने प्लांट-बेस्ड डाइट अपनाने के बाद डायबिटीज़ की दवाइयाँ कम कीं",
+        "ऐसे मरीज का प्रशंसापत्र बताइए जिसने टाइप 2 डायबिटीज़ कम की",
+        "क्या टाइप 2 डायबिटीज़ उलटी हो सकती है?"
+    ]
+}
+
+preset_questions = preset_questions_map[st.session_state.language]
 
 # -----------------------------
-# MAIN PANEL - compact layout
+# Main panel
 # -----------------------------
 st.markdown('<div class="panel-card">', unsafe_allow_html=True)
 
@@ -485,25 +546,26 @@ c1, c2, c3 = st.columns(3)
 
 with c1:
     if st.button(get_text("reduce_medicines")):
-        st.session_state["selected_query"] = preset_questions[0]
+        st.session_state.selected_query = preset_questions[0]
 
 with c2:
     if st.button(get_text("type2_reversed")):
-        st.session_state["selected_query"] = preset_questions[1]
+        st.session_state.selected_query = preset_questions[1]
 
 with c3:
     if st.button(get_text("diabetes_reversed")):
-        st.session_state["selected_query"] = preset_questions[2]
+        st.session_state.selected_query = preset_questions[2]
 
 st.markdown("<hr>", unsafe_allow_html=True)
 
-default_query = st.session_state.get("selected_query", "")
 query = st.text_input(
     f"💬 {get_text('ask_question')}",
-    value=default_query
+    value=st.session_state.selected_query
 )
 
-# compact mic below input
+# -----------------------------
+# Voice input
+# -----------------------------
 st.markdown('<div class="mic-wrap">', unsafe_allow_html=True)
 audio_bytes = audio_recorder(
     text="",
@@ -517,22 +579,29 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 if audio_bytes:
     with st.spinner(get_text("processing")):
-        input_lang = "English" if st.session_state.language == "English" else "Hindi"
+        active_lang = detect_language_from_ui()
         recognized_text = speech_to_text(
             audio_bytes,
-            lang_code=lang_map[input_lang]["stt"]
+            lang_code=lang_map[active_lang]["stt"]
         )
-        st.session_state["selected_query"] = recognized_text
+        st.session_state.selected_query = recognized_text
         query = recognized_text
+
     st.success(f"{get_text('recognized')} {recognized_text}")
 
-input_lang = "English" if st.session_state.language == "English" else "Hindi"
-output_lang = input_lang
-
+# -----------------------------
+# Ask button
+# -----------------------------
 if st.button(f"🚀 {get_text('ask_btn')}", type="primary"):
     if query.strip():
+        st.session_state.selected_query = query.strip()
+
         with st.spinner(get_text("thinking")):
-            result = ask_rag(query.strip(), top_k=3)
+            result = ask_rag(
+                query=query.strip(),
+                top_k=3,
+                answer_language=st.session_state.language
+            )
 
         st.markdown(f'<div class="section-title">{get_text("answer")}</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="answer-box">{result["answer"]}</div>', unsafe_allow_html=True)
@@ -557,16 +626,17 @@ if st.button(f"🚀 {get_text('ask_btn')}", type="primary"):
 
         audio_file = text_to_speech(
             result["answer"],
-            lang=lang_map[output_lang]["tts"]
+            lang=lang_map[st.session_state.language]["tts"]
         )
 
-        with open(audio_file, "rb") as f:
-            out_audio_bytes = f.read()
-            st.markdown('<div class="audio-box">', unsafe_allow_html=True)
-            st.audio(out_audio_bytes, format="audio/mp3")
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        if os.path.exists(audio_file):
+        if audio_file and os.path.exists(audio_file):
+            with open(audio_file, "rb") as f:
+                out_audio_bytes = f.read()
+                st.markdown('<div class="audio-box">', unsafe_allow_html=True)
+                st.audio(out_audio_bytes, format="audio/mp3")
+                st.markdown('</div>', unsafe_allow_html=True)
             os.remove(audio_file)
+        else:
+            st.error(get_text("tts_failed"))
 
 st.markdown('</div>', unsafe_allow_html=True)
