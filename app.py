@@ -471,7 +471,7 @@ st.markdown("""
         .lang-checkbox .stRadio > label,
         .lang-checkbox .stRadio > label > div,
         .lang-checkbox .stRadio > label > span {
-            color: #111111 !important;
+            color: #FFFFFF !important;
         }
     }
 
@@ -488,7 +488,7 @@ st.markdown("""
         .lang-checkbox .stRadio > label,
         .lang-checkbox .stRadio > label > div,
         .lang-checkbox .stRadio > label > span {
-            color: #ffffff !important;
+            color: #FFFFFF !important;
         }
     }
 
