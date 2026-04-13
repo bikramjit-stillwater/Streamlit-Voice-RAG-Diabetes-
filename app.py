@@ -49,7 +49,7 @@ def get_text(key):
             "score": "Score:"
         },
         "hindi": {
-            "title": "SHARAN बातचीत AI",
+            "title": "शरण संवादात्मक कृत्रिम बुद्धिमत्ता",
             "voice_input": "वॉइस इनपुट",
             "sample_questions": "नमूना प्रश्न",
             "reduce_medicines": "दवा कम करें",
