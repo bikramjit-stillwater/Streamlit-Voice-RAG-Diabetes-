@@ -380,52 +380,72 @@ st.markdown("""
     }
 
     .mic-wrap {
-        margin-top: 1.1rem;
         display: flex;
         justify-content: center;
         align-items: center;
+        margin-top: 8px;
+        background: transparent !important;
     }
 
-    .mic-note {
-        margin-top: 0.45rem;
-        text-align: center;
-        color: #f3f4f6;
-        font-size: 0.92rem;
-        font-weight: 500;
+    .mic-wrap > div {
+        background: transparent !important;
     }
 
     div[data-testid="stAudioRecorder"] {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+
+    div[data-testid="stAudioRecorder"] > div {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
     }
 
     div[data-testid="stAudioRecorder"] button {
-        width: 58px !important;
-        height: 58px !important;
-        min-height: 58px !important;
-        border-radius: 999px !important;
-        border: 1px solid rgba(255,255,255,0.18) !important;
-        background: rgba(255, 255, 255, 0.12) !important;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 10px 28px rgba(0,0,0,0.18);
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin: auto !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height: auto !important;
+        width: auto !important;
+        height: auto !important;
+        outline: none !important;
+        border-radius: 0 !important;
     }
 
-    div[data-testid="stAudioRecorder"] button:hover {
-        background: rgba(255,255,255,0.20) !important;
-        transform: scale(1.03);
+    div[data-testid="stAudioRecorder"] button:hover,
+    div[data-testid="stAudioRecorder"] button:focus,
+    div[data-testid="stAudioRecorder"] button:active {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        transform: none !important;
     }
 
-    div[data-testid="stAudioRecorder"] p {
+    div[data-testid="stAudioRecorder"] svg,
+    div[data-testid="stAudioRecorder"] path {
+        fill: black !important;
+        stroke: black !important;
+        color: black !important;
+    }
+
+    div[data-testid="stAudioRecorder"] p,
+    div[data-testid="stAudioRecorder"] span,
+    div[data-testid="stAudioRecorder"] small {
         display: none !important;
     }
 
-    div[data-testid="stAudioRecorder"] span {
-        display: none !important;
+    iframe {
+        background: transparent !important;
     }
 
     @media (max-width: 768px) {
@@ -445,12 +465,6 @@ st.markdown("""
 
         .panel-card {
             padding: 0.9rem;
-        }
-
-        div[data-testid="stAudioRecorder"] button {
-            width: 54px !important;
-            height: 54px !important;
-            min-height: 54px !important;
         }
     }
 </style>
@@ -501,7 +515,6 @@ query = st.text_input(
     value=default_query
 )
 
-# compact mic below input
 st.markdown('<div class="mic-wrap">', unsafe_allow_html=True)
 audio_bytes = audio_recorder(
     text="",
