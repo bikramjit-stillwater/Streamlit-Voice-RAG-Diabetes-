@@ -204,10 +204,21 @@ def text_to_speech(text, lang="en"):
         return tmp_file.name
 
 # -----------------------------
-# THEME / UI - UPDATED STYLES
+# THEME / UI - FIXED MICROPHONE + PUSHED DOWN HEADER + WHITE LANGUAGE TEXT
 # -----------------------------
 st.markdown("""
 <style>
+    /* FIXED: Push everything down - more top padding */
+    .stApp > div > div > div {
+        padding-top: 3rem !important;
+    }
+    
+    .block-container {
+        padding-top: 2.5rem !important;
+        padding-bottom: 1rem;
+        max-width: 1220px;
+    }
+
     .stApp {
         background: linear-gradient(rgba(15, 18, 22, 0.48), rgba(15, 18, 22, 0.48)),
                     url('https://stillwater-main.onrender.com/images/c.png');
@@ -217,26 +228,21 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    .block-container {
-        padding-top: 0.7rem;
-        padding-bottom: 1rem;
-        max-width: 1220px;
-    }
-
     .hero-wrap {
         background: rgba(255, 255, 255, 0.10);
         backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.12);
         box-shadow: 0 10px 34px rgba(0, 0, 0, 0.18);
         border-radius: 24px;
-        padding: 1rem 1.2rem;
+        padding: 1.5rem 1.2rem;  /* Increased padding */
         text-align: center;
-        margin-bottom: 0.8rem;
+        margin-bottom: 1.2rem;   /* More margin */
+        margin-top: 1rem;        /* NEW: Top margin to push down */
     }
 
     .hero-logo {
         height: 48px;
-        margin: 0 auto 0.3rem auto;
+        margin: 0 auto 0.5rem auto;  /* More bottom margin */
         display: block;
         object-fit: contain;
     }
@@ -256,9 +262,9 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.10);
         box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
         border-radius: 22px;
-        padding: 1rem;
+        padding: 1.5rem;  /* More padding */
         color: white;
-        margin-top: 0.45rem;
+        margin-top: 1rem;
     }
 
     .section-title {
@@ -269,25 +275,30 @@ st.markdown("""
         line-height: 1.2;
     }
 
-    /* NEW: Language checkbox styling - smaller, compact */
-    .lang-checkbox .stRadio > label {
-        font-size: 0.85rem !important;
-        padding: 0.3rem 0.5rem !important;
-        margin: 0.2rem !important;
-        border-radius: 8px !important;
-        background: rgba(255, 255, 255, 0.15) !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    /* FIXED: Language - WHITE TEXT */
+    .lang-checkbox {
         color: white !important;
-        font-weight: 500 !important;
+    }
+    .lang-checkbox .stRadio > label {
+        color: #ffffff !important;
+        font-size: 0.9rem !important;
+        padding: 0.4rem 0.8rem !important;
+        margin: 0.1rem !important;
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.20) !important;
+        border: 1px solid rgba(255, 255, 255, 0.30) !important;
+        font-weight: 600 !important;
         min-height: auto !important;
+        white-space: nowrap;
     }
 
     .lang-checkbox .stRadio > label:hover {
-        background: rgba(255, 255, 255, 0.25) !important;
+        background: rgba(255, 255, 255, 0.35) !important;
+        color: #ffffff !important;
     }
 
-    .lang-checkbox .stRadio > div > div {
-        gap: 0.5rem !important;
+    .lang-checkbox .stRadio > label > span {
+        color: #ffffff !important;
     }
 
     .stTextInput label {
@@ -383,22 +394,24 @@ st.markdown("""
         margin: 0.9rem 0;
     }
 
-    /* UPDATED: Microphone - ONLY black icon, no white box */
+    /* ULTRA FIXED: Microphone - ABSOLUTELY NO WHITE BOX */
     .mic-wrap {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 12px;
-        padding: 8px 0;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-
-    div[data-testid="stAudioRecorder"] {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
+        margin-top: 16px !important;
+        padding: 12px 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        min-height: 0 !important;
+    }
+
+    /* Target ALL audio recorder containers */
+    div[data-testid="stAudioRecorder"],
+    div[data-testid="stAudioRecorder"] *,
+    div[data-testid="stAudioRecorder"] > div,
+    div[data-testid="stAudioRecorder"] > div > div {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
@@ -406,23 +419,18 @@ st.markdown("""
         margin: 0 !important;
         width: auto !important;
         height: auto !important;
-    }
-
-    div[data-testid="stAudioRecorder"] > div {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
+        min-height: 0 !important;
+        min-width: 0 !important;
+        display: contents !important;
     }
 
     div[data-testid="stAudioRecorder"] button {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 0 !important;
+        padding: 4px !important;
         margin: 0 !important;
-        min-height: auto !important;
+        min-height: 0 !important;
         width: auto !important;
         height: auto !important;
         outline: none !important;
@@ -439,19 +447,23 @@ st.markdown("""
         transform: none !important;
     }
 
+    /* FORCE black microphone icon */
     div[data-testid="stAudioRecorder"] svg,
-    div[data-testid="stAudioRecorder"] path {
+    div[data-testid="stAudioRecorder"] path,
+    div[data-testid="stAudioRecorder"] [data-testid*="icon"] {
         fill: #000000 !important;
         stroke: #000000 !important;
         color: #000000 !important;
-        width: 28px !important;
-        height: 28px !important;
+        width: 32px !important;
+        height: 32px !important;
     }
 
+    /* Hide ALL text/labels */
     div[data-testid="stAudioRecorder"] p,
     div[data-testid="stAudioRecorder"] span,
     div[data-testid="stAudioRecorder"] small,
-    div[data-testid="stAudioRecorder"] div:not([data-testid="stAudioRecorder"] button) {
+    div[data-testid="stAudioRecorder"] label,
+    div[data-testid="stAudioRecorder"] div:not([data-testid*="button"]) {
         display: none !important;
     }
 
@@ -461,13 +473,13 @@ st.markdown("""
 
     @media (max-width: 768px) {
         .hero-wrap {
-            padding: 0.9rem 0.9rem 1rem 0.9rem;
+            padding: 1.2rem 1rem;
             border-radius: 20px;
+            margin-top: 1.5rem;
         }
 
         .hero-logo {
             height: 42px;
-            margin-bottom: 0.25rem;
         }
 
         .hero-title {
@@ -475,19 +487,15 @@ st.markdown("""
         }
 
         .panel-card {
-            padding: 0.9rem;
-        }
-
-        .lang-checkbox .stRadio > label {
-            font-size: 0.8rem !important;
-            padding: 0.25rem 0.4rem !important;
+            padding: 1.2rem;
+            margin-top: 1.2rem;
         }
     }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# HEADER (removed language selector from top)
+# HEADER - NOW PUSHED DOWN
 # -----------------------------
 st.markdown("""
 <div class="hero-wrap">
@@ -503,13 +511,13 @@ preset_questions = [
 ]
 
 # -----------------------------
-# MAIN PANEL - UPDATED LAYOUT
+# MAIN PANEL
 # -----------------------------
 st.markdown('<div class="panel-card">', unsafe_allow_html=True)
 
-# NEW: Language selector moved DOWN inside panel with padding
-st.markdown('<div style="padding-bottom: 1rem; padding-top: 0.5rem;">', unsafe_allow_html=True)
-col1, col2 = st.columns([1, 4])
+# Language selector - WHITE TEXT
+st.markdown('<div style="padding: 1rem 0;">', unsafe_allow_html=True)
+col1, _ = st.columns([1, 4])
 with col1:
     st.markdown('<div class="lang-checkbox">', unsafe_allow_html=True)
     lang_option = st.radio("🌐", ["English", "Hindi"], 
@@ -544,7 +552,7 @@ query = st.text_input(
     value=default_query
 )
 
-# UPDATED: Microphone - clean black icon only
+# Microphone - ONLY ICON
 st.markdown('<div class="mic-wrap">', unsafe_allow_html=True)
 audio_bytes = audio_recorder(
     text="",
