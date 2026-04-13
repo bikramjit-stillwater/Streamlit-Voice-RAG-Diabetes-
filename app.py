@@ -73,14 +73,6 @@ lang_map = {
     "Hindi": {"stt": "hi-IN", "tts": "hi"}
 }
 
-# Language toggle - top right
-col_empty, col_lang = st.columns([3, 1])
-with col_lang:
-    st.session_state.language = st.selectbox(
-        "🌐", ["English", "Hindi"],
-        index=0 if st.session_state.language == "English" else 1
-    )
-
 # -----------------------------
 # Load and prepare data
 # -----------------------------
@@ -212,7 +204,7 @@ def text_to_speech(text, lang="en"):
         return tmp_file.name
 
 # -----------------------------
-# THEME / UI
+# THEME / UI - UPDATED STYLES
 # -----------------------------
 st.markdown("""
 <style>
@@ -277,18 +269,34 @@ st.markdown("""
         line-height: 1.2;
     }
 
-    .stSelectbox label,
+    /* NEW: Language checkbox styling - smaller, compact */
+    .lang-checkbox .stRadio > label {
+        font-size: 0.85rem !important;
+        padding: 0.3rem 0.5rem !important;
+        margin: 0.2rem !important;
+        border-radius: 8px !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        color: white !important;
+        font-weight: 500 !important;
+        min-height: auto !important;
+    }
+
+    .lang-checkbox .stRadio > label:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+    }
+
+    .lang-checkbox .stRadio > div > div {
+        gap: 0.5rem !important;
+    }
+
     .stTextInput label {
         color: #ffffff !important;
         font-weight: 600 !important;
     }
 
-    .stTextInput > div > div > input,
-    .stSelectbox > div > div {
-        border-radius: 16px !important;
-    }
-
     .stTextInput > div > div > input {
+        border-radius: 16px !important;
         background: rgba(255, 255, 255, 0.88) !important;
         border: 1px solid rgba(255, 255, 255, 0.20) !important;
         color: #1b1b1b !important;
@@ -298,10 +306,6 @@ st.markdown("""
 
     .stTextInput > div > div > input::placeholder {
         color: #6b7280;
-    }
-
-    .stSelectbox > div > div {
-        background: rgba(255, 255, 255, 0.88) !important;
     }
 
     .stButton > button {
@@ -379,16 +383,16 @@ st.markdown("""
         margin: 0.9rem 0;
     }
 
+    /* UPDATED: Microphone - ONLY black icon, no white box */
     .mic-wrap {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-top: 8px;
+        margin-top: 12px;
+        padding: 8px 0;
         background: transparent !important;
-    }
-
-    .mic-wrap > div {
-        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     div[data-testid="stAudioRecorder"] {
@@ -399,6 +403,9 @@ st.markdown("""
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
+        margin: 0 !important;
+        width: auto !important;
+        height: auto !important;
     }
 
     div[data-testid="stAudioRecorder"] > div {
@@ -406,6 +413,7 @@ st.markdown("""
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
+        margin: 0 !important;
     }
 
     div[data-testid="stAudioRecorder"] button {
@@ -433,14 +441,17 @@ st.markdown("""
 
     div[data-testid="stAudioRecorder"] svg,
     div[data-testid="stAudioRecorder"] path {
-        fill: black !important;
-        stroke: black !important;
-        color: black !important;
+        fill: #000000 !important;
+        stroke: #000000 !important;
+        color: #000000 !important;
+        width: 28px !important;
+        height: 28px !important;
     }
 
     div[data-testid="stAudioRecorder"] p,
     div[data-testid="stAudioRecorder"] span,
-    div[data-testid="stAudioRecorder"] small {
+    div[data-testid="stAudioRecorder"] small,
+    div[data-testid="stAudioRecorder"] div:not([data-testid="stAudioRecorder"] button) {
         display: none !important;
     }
 
@@ -466,12 +477,17 @@ st.markdown("""
         .panel-card {
             padding: 0.9rem;
         }
+
+        .lang-checkbox .stRadio > label {
+            font-size: 0.8rem !important;
+            padding: 0.25rem 0.4rem !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# HEADER
+# HEADER (removed language selector from top)
 # -----------------------------
 st.markdown("""
 <div class="hero-wrap">
@@ -487,9 +503,22 @@ preset_questions = [
 ]
 
 # -----------------------------
-# MAIN PANEL - compact layout
+# MAIN PANEL - UPDATED LAYOUT
 # -----------------------------
 st.markdown('<div class="panel-card">', unsafe_allow_html=True)
+
+# NEW: Language selector moved DOWN inside panel with padding
+st.markdown('<div style="padding-bottom: 1rem; padding-top: 0.5rem;">', unsafe_allow_html=True)
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.markdown('<div class="lang-checkbox">', unsafe_allow_html=True)
+    lang_option = st.radio("🌐", ["English", "Hindi"], 
+                          index=0 if st.session_state.language == "English" else 1,
+                          horizontal=True,
+                          label_visibility="collapsed")
+    st.session_state.language = lang_option
+    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown(f'<div class="section-title">💡 {get_text("sample_questions")}</div>', unsafe_allow_html=True)
 
@@ -515,6 +544,7 @@ query = st.text_input(
     value=default_query
 )
 
+# UPDATED: Microphone - clean black icon only
 st.markdown('<div class="mic-wrap">', unsafe_allow_html=True)
 audio_bytes = audio_recorder(
     text="",
